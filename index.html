@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home Soil 2026 — Official Fan-Inspired USA World Cup Gear</title>
+  <meta name="description" content="Fan-inspired original gear for the USA 2026 World Cup. Premium tees, hoodies, hats, and more. Printed in USA. Ships 3-5 days." />
+
+  <!-- Precompiled Tailwind CSS from CDN chosen over Play CDN to avoid ~25KB runtime compiler and eliminate INP from JIT class scanning -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
+
+  <style>
+    /* ===== CUSTOM PROPERTIES ===== */
+    :root {
+      --red:    #B22234;
+      --red-dk: #8B1A27;
+      --navy:   #002868;
+      --navy-lt:#0A3580;
+      --white:  #FFFFFF;
+      --cream:  #F8F7F4;
+      --gold:   #C8A84B;
+      --text:   #1A1A2E;
+    }
+
+    /* ===== BASE ===== */
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; color: var(--text); background: var(--white); margin: 0; }
+    .font-display { font-family: 'Barlow Condensed', sans-serif; }
+
+    /* Prevent layout shift — reserve space for images */
+    img { width: 100%; height: auto; display: block; }
+
+    /* ===== COLOUR UTILITIES ===== */
+    .bg-navy   { background-color: var(--navy); }
+    .bg-red    { background-color: var(--red); }
+    .bg-cream  { background-color: var(--cream); }
+    .text-navy { color: var(--navy); }
+    .text-red  { color: var(--red); }
+    .text-gold { color: var(--gold); }
+    .border-red { border-color: var(--red); }
+    .border-navy { border-color: var(--navy); }
+
+    /* ===== HERO ===== */
+    .hero-bg {
+      background: linear-gradient(135deg, var(--navy) 0%, #001540 60%, #1a0020 100%);
+      position: relative; overflow: hidden;
+    }
+    .hero-bg::before {
+      content:''; position:absolute; inset:0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(178,34,52,0.25) 0%, transparent 65%);
+    }
+    .hero-stars {
+      position:absolute; inset:0; pointer-events:none;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,0.7) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px);
+      background-size: 60px 60px, 30px 30px;
+      background-position: 0 0, 15px 15px;
+      opacity: 0.15;
+    }
+
+    /* ===== COUNTDOWN ===== */
+    .countdown-unit {
+      display:flex; flex-direction:column; align-items:center;
+      background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+      border-radius:8px; padding:10px 14px; min-width:64px;
+      backdrop-filter: blur(4px);
+    }
+    .countdown-num { font-family:'Barlow Condensed',sans-serif; font-size:2.25rem; font-weight:900; line-height:1; color:#fff; }
+    .countdown-lbl { font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,0.6); margin-top:2px; }
+
+    /* ===== TRUST BAR ===== */
+    .trust-bar { background: var(--navy); color:#fff; }
+    .trust-item { display:flex; align-items:center; gap:8px; padding:12px 16px; white-space:nowrap; }
+    .trust-icon { font-size:1.25rem; flex-shrink:0; }
+
+    /* ===== PRODUCT GRID ===== */
+    .product-card {
+      background:#fff; border-radius:12px; overflow:hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+      transition: box-shadow 150ms ease, transform 150ms ease;
+      position: relative;
+    }
+    .product-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.12); transform: translateY(-2px); }
+    @media (prefers-reduced-motion: reduce) { .product-card:hover { transform: none; } }
+
+    .product-img-wrap { position:relative; aspect-ratio:4/5; overflow:hidden; background:#f1f1f0; }
+    .product-img-wrap img { width:100%; height:100%; object-fit:cover; transition: transform 300ms ease; }
+    .product-card:hover .product-img-wrap img { transform:scale(1.03); }
+    @media (prefers-reduced-motion: reduce) { .product-card:hover .product-img-wrap img { transform:none; } }
+
+    .stock-badge {
+      position:absolute; top:10px; left:10px; font-size:.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.06em; padding:3px 8px; border-radius:20px;
+    }
+    .stock-badge.low { background:var(--red); color:#fff; }
+    .stock-badge.new { background:var(--navy); color:#fff; }
+
+    .size-btn {
+      border:1px solid #d1d5db; border-radius:4px; padding:3px 8px;
+      font-size:.7rem; font-weight:600; cursor:pointer; background:#fff;
+      transition: background 100ms, border-color 100ms, color 100ms;
+    }
+    .size-btn.active, .size-btn:hover { background:var(--navy); border-color:var(--navy); color:#fff; }
+
+    .btn-quick-add {
+      background:var(--navy); color:#fff; border:none; border-radius:8px;
+      padding:10px 16px; font-size:.85rem; font-weight:700; cursor:pointer;
+      transition: background 120ms, transform 80ms;
+      width:100%;
+    }
+    .btn-quick-add:hover { background:var(--navy-lt); }
+    .btn-quick-add:active { transform:scale(0.98); }
+
+    .btn-buy-now {
+      background:var(--red); color:#fff; border:none; border-radius:8px;
+      padding:10px 16px; font-size:.85rem; font-weight:700; cursor:pointer;
+      transition: background 120ms, transform 80ms;
+      width:100%;
+    }
+    .btn-buy-now:hover { background:var(--red-dk); }
+    .btn-buy-now:active { transform:scale(0.98); }
+
+    /* ===== BUNDLE ===== */
+    .bundle-card {
+      background: linear-gradient(135deg, var(--navy) 0%, #001a4d 100%);
+      border-radius:16px; color:#fff; overflow:hidden;
+      box-shadow: 0 8px 32px rgba(0,40,104,0.3);
+    }
+
+    /* ===== CART DRAWER ===== */
+    .cart-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.5);
+      z-index:900; opacity:0; pointer-events:none;
+      transition: opacity 200ms ease;
+    }
+    .cart-overlay.open { opacity:1; pointer-events:all; }
+
+    .cart-drawer {
+      position:fixed; top:0; right:0; bottom:0; width:min(420px, 100vw);
+      background:#fff; z-index:901;
+      transform: translateX(100%);
+      transition: transform 220ms cubic-bezier(0.4,0,0.2,1);
+      display:flex; flex-direction:column;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+    }
+    @media (max-width: 640px) {
+      .cart-drawer {
+        top:auto; right:0; left:0; bottom:0;
+        width:100%; height:85vh;
+        transform: translateY(100%);
+        border-radius:16px 16px 0 0;
+      }
+      .cart-drawer.open { transform: translateY(0); }
+    }
+    .cart-drawer.open { transform: translateX(0); }
+
+    /* ===== CHECKOUT MODAL ===== */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.65);
+      z-index:1000; display:none; align-items:center; justify-content:center;
+      padding:16px;
+    }
+    .modal-overlay.open { display:flex; }
+    .checkout-modal {
+      background:#fff; border-radius:16px; width:100%; max-width:860px;
+      max-height:92vh; overflow:hidden; display:flex; flex-direction:column;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+    }
+    .checkout-inner {
+      display:grid; grid-template-columns:1fr; overflow-y:auto;
+    }
+    @media (min-width:768px) {
+      .checkout-inner { grid-template-columns:1fr 380px; overflow-y:hidden; }
+      .checkout-form-col { overflow-y:auto; }
+      .checkout-summary-col { overflow-y:auto; }
+    }
+
+    .wallet-btn {
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      border-radius:10px; padding:14px 20px; font-size:1rem; font-weight:700;
+      cursor:pointer; border:none; transition: opacity 120ms, transform 80ms;
+      width:100%;
+    }
+    .wallet-btn:active { transform:scale(0.98); }
+    .wallet-btn.apple  { background:#000; color:#fff; }
+    .wallet-btn.google { background:#fff; color:#333; border:1.5px solid #ddd; }
+    .wallet-btn.paypal { background:#003087; color:#fff; }
+    .wallet-btn.venmo  { background:#3D95CE; color:#fff; }
+    .wallet-btn.cashapp{ background:#00D64F; color:#fff; }
+
+    .form-input {
+      width:100%; border:1.5px solid #d1d5db; border-radius:8px;
+      padding:11px 14px; font-size:.95rem; color:var(--text);
+      transition: border-color 120ms, box-shadow 120ms;
+      outline:none;
+    }
+    .form-input:focus { border-color:var(--navy); box-shadow:0 0 0 3px rgba(0,40,104,0.12); }
+    .form-label { font-size:.8rem; font-weight:600; color:#374151; margin-bottom:4px; display:block; }
+
+    /* ===== ADMIN MODAL ===== */
+    .admin-modal { display:none; }
+    .admin-modal.open { display:flex; }
+
+    /* ===== FAQ ACCORDION ===== */
+    .faq-item summary { cursor:pointer; list-style:none; user-select:none; }
+    .faq-item summary::-webkit-details-marker { display:none; }
+    .faq-item[open] .faq-icon { transform:rotate(45deg); }
+    .faq-icon { transition: transform 150ms; }
+
+    /* ===== REVIEWS CAROUSEL ===== */
+    .reviews-track { display:flex; gap:20px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:8px; }
+    .reviews-track::-webkit-scrollbar { display:none; }
+    .review-card { scroll-snap-align:start; flex:0 0 280px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,0.07); }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:var(--navy); color:#fff; padding:10px 20px; border-radius:40px;
+      font-size:.85rem; font-weight:600; z-index:1100;
+      opacity:0; transition:opacity 200ms, transform 200ms;
+      pointer-events:none; white-space:nowrap;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* ===== UTILITIES ===== */
+    .divider-or {
+      display:flex; align-items:center; gap:12px;
+      color:#9ca3af; font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+    }
+    .divider-or::before, .divider-or::after { content:''; flex:1; height:1px; background:#e5e7eb; }
+
+    .btn-primary {
+      background:var(--red); color:#fff; border:none; border-radius:10px;
+      padding:15px 24px; font-size:1rem; font-weight:800; cursor:pointer;
+      transition: background 120ms, transform 80ms; width:100%;
+    }
+    .btn-primary:hover { background:var(--red-dk); }
+    .btn-primary:active { transform:scale(0.98); }
+
+    .secure-badge { display:inline-flex; align-items:center; gap:5px; font-size:.72rem; color:#6b7280; }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:3px; }
+
+    /* ===== STICKY NAV ===== */
+    .site-nav { position:sticky; top:0; z-index:800; background:var(--navy); }
+
+    /* ===== HOW IT WORKS ===== */
+    .step-circle { width:52px; height:52px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-size:1.4rem; font-weight:900; flex-shrink:0; }
+
+    /* ===== ADMIN TAB ===== */
+    .admin-tab-btn { padding:8px 18px; border-radius:6px; font-weight:600; font-size:.85rem; cursor:pointer; border:none; background:transparent; color:#6b7280; }
+    .admin-tab-btn.active { background:var(--navy); color:#fff; }
+
+    /* ===== ANNOUNCEMENT BAR ===== */
+    .announce-bar { background:var(--red); color:#fff; text-align:center; padding:8px 16px; font-size:.8rem; font-weight:700; letter-spacing:.04em; }
+  </style>
+</head>
+<body>
+
+<!-- ====================================================
+     ANNOUNCEMENT BAR — Limited Drop
+     ==================================================== -->
+<div class="announce-bar" id="announce-bar">
+  ⚽ LIMITED DROP: First 200 orders get a FREE enamel pin — <span id="drop-count">87</span> left &nbsp;·&nbsp;
+  <button onclick="document.getElementById('announce-bar').style.display='none'" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1rem;vertical-align:middle;">✕</button>
+</div>
+
+<!-- ====================================================
+     STICKY NAV
+     ==================================================== -->
+<nav class="site-nav">
+  <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
+    <a href="#" class="font-display text-white font-black text-2xl tracking-tight">HOME SOIL <span class="text-red-400" style="color:#e05c6e">2026</span></a>
+    <div class="flex items-center gap-3">
+      <a href="#products" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Shop</a>
+      <a href="#bundles" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Bundles</a>
+      <button onclick="openCart()" class="relative text-white p-2 hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors" aria-label="Open cart">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style="background:var(--red); display:none;">0</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ====================================================
+     SECTION 1: HERO
+     ==================================================== -->
+<section class="hero-bg py-16 md:py-24 px-4 relative">
+  <div class="hero-stars"></div>
+  <div class="max-w-5xl mx-auto relative z-10 text-center">
+
+    <div class="inline-flex items-center gap-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-full px-4 py-1.5 text-white text-xs font-semibold uppercase tracking-widest mb-6">
+      🌎 USA • Canada • Mexico — Summer 2026
+    </div>
+
+    <h1 class="font-display text-white font-black uppercase leading-none mb-4" style="font-size:clamp(2.8rem,8vw,6rem);">
+      The World Cup<br/><span style="color:var(--gold);">Comes Home.</span>
+    </h1>
+    <p class="text-white text-opacity-80 text-lg md:text-xl mb-8 max-w-2xl mx-auto" style="color:rgba(255,255,255,0.8);">
+      Fan-inspired original gear made for the biggest tournament on home soil. Wear it proud.
+    </p>
+
+    <!-- Countdown to World Cup Opening Match: June 11, 2026 -->
+    <div class="mb-8">
+      <p class="text-white text-opacity-60 text-xs uppercase tracking-widest font-semibold mb-3" style="color:rgba(255,255,255,0.6);">Opening Match Countdown</p>
+      <div class="flex justify-center gap-3" id="countdown-display">
+        <div class="countdown-unit"><span class="countdown-num" id="cd-days">000</span><span class="countdown-lbl">Days</span></div>
+        <div class="countdown-unit"><span class="countdown-num" id="cd-hours">00</span><span class="countdown-lbl">Hours</span></div>
+        <div class="countdown-unit"><span class="countdown-num" id="cd-mins">00</span><span class="countdown-lbl">Mins</span></div>
+        <div class="countdown-unit"><span class="countdown-num" id="cd-secs">00</span><span class="countdown-lbl">Secs</span></div>
+      </div>
+      <p class="text-white text-xs mt-2 font-medium" style="color:rgba(255,255,255,0.5);">Opening Match — June 11, 2026</p>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="#products" class="btn-primary inline-block text-center" style="width:auto; padding:15px 36px; font-size:1.05rem;">
+        🛒 Shop the Collection
+      </a>
+      <button onclick="openAdmin()" class="inline-block text-center border-2 border-white border-opacity-40 text-white rounded-xl px-9 py-4 font-bold text-base hover:bg-white hover:bg-opacity-10 transition-colors" style="border-color:rgba(255,255,255,0.4);">
+        📣 See the Ads
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 2: TRUST BAR
+     ==================================================== -->
+<div class="trust-bar overflow-x-auto">
+  <div class="flex items-center justify-center min-w-max mx-auto divide-x divide-white divide-opacity-20">
+    <div class="trust-item"><span class="trust-icon">🇺🇸</span><span class="text-sm font-semibold">Printed in USA</span></div>
+    <div class="trust-item"><span class="trust-icon">📦</span><span class="text-sm font-semibold">Ships in 3–5 Days</span></div>
+    <div class="trust-item"><span class="trust-icon">✅</span><span class="text-sm font-semibold">30-Day Happiness Guarantee</span></div>
+    <div class="trust-item"><span class="trust-icon">🎨</span><span class="text-sm font-semibold">Fan-Inspired Original Designs</span></div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 3: FEATURED PRODUCTS
+     ==================================================== -->
+<section id="products" class="py-16 bg-cream px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-10">
+      <h2 class="font-display font-black text-navy uppercase text-5xl mb-2">The Collection</h2>
+      <p class="text-gray-500 text-base">Fan-inspired designs for the once-in-a-generation home tournament.</p>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="flex gap-2 justify-center flex-wrap mb-8">
+      <button class="filter-btn active-filter" data-filter="all" onclick="filterProducts('all', this)">All</button>
+      <button class="filter-btn" data-filter="tees" onclick="filterProducts('tees', this)">Tees</button>
+      <button class="filter-btn" data-filter="hoodies" onclick="filterProducts('hoodies', this)">Hoodies</button>
+      <button class="filter-btn" data-filter="hats" onclick="filterProducts('hats', this)">Hats</button>
+      <button class="filter-btn" data-filter="accessories" onclick="filterProducts('accessories', this)">Accessories</button>
+    </div>
+
+    <style>
+      .filter-btn { padding:7px 18px; border-radius:30px; border:1.5px solid #d1d5db; background:#fff; font-size:.8rem; font-weight:700; cursor:pointer; transition:all 120ms; }
+      .filter-btn:hover, .filter-btn.active-filter { background:var(--navy); border-color:var(--navy); color:#fff; }
+    </style>
+
+    <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"></div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 4: BUNDLES
+     ==================================================== -->
+<section id="bundles" class="py-16 px-4" style="background:var(--navy);">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-10">
+      <h2 class="font-display font-black text-white uppercase text-5xl mb-2">Fan Bundles</h2>
+      <p class="text-white text-opacity-70" style="color:rgba(255,255,255,0.7);">Stack savings. Look the part. Arrive ready.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Bundle 1 -->
+      <div class="bundle-card p-8">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-1 block">Most Popular</span>
+            <h3 class="font-display font-black text-white text-3xl uppercase">USA Fan Pack</h3>
+            <p class="text-white text-opacity-70 text-sm mt-1" style="color:rgba(255,255,255,0.7);">Premium Tee + Snapback Hat + Enamel Pin</p>
+          </div>
+          <div class="text-right">
+            <p class="text-white text-opacity-50 line-through text-lg" style="color:rgba(255,255,255,0.5);">$72</p>
+            <p class="text-yellow-400 font-black text-3xl">$54</p>
+            <span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full" style="background:var(--red);">SAVE $18</span>
+          </div>
+        </div>
+        <ul class="text-white text-opacity-80 text-sm space-y-1 mb-6" style="color:rgba(255,255,255,0.8);">
+          <li>• "Home Soil" Premium Heavyweight Tee (your size)</li>
+          <li>• Stars & Stripes Snapback Hat</li>
+          <li>• Limited Edition 2026 Enamel Pin</li>
+        </ul>
+        <button onclick="addBundle('fan-pack')" class="btn-primary font-black text-lg">Add Bundle to Cart — $54</button>
+      </div>
+
+      <!-- Bundle 2 -->
+      <div class="bundle-card p-8">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-1 block">Best Value</span>
+            <h3 class="font-display font-black text-white text-3xl uppercase">Watch Party Kit</h3>
+            <p class="text-white text-opacity-70 text-sm mt-1" style="color:rgba(255,255,255,0.7);">Hoodie + Scarf + 2× Enamel Pins</p>
+          </div>
+          <div class="text-right">
+            <p class="text-white text-opacity-50 line-through text-lg" style="color:rgba(255,255,255,0.5);">$98</p>
+            <p class="text-yellow-400 font-black text-3xl">$72</p>
+            <span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full" style="background:var(--red);">SAVE $26</span>
+          </div>
+        </div>
+        <ul class="text-white text-opacity-80 text-sm space-y-1 mb-6" style="color:rgba(255,255,255,0.8);">
+          <li>• "Home Soil" Premium Hoodie (your size)</li>
+          <li>• Red/White/Blue Fan Scarf</li>
+          <li>• 2× Limited Edition Enamel Pins</li>
+        </ul>
+        <button onclick="addBundle('watch-party')" class="btn-primary font-black text-lg">Add Bundle to Cart — $72</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 5: SOCIAL PROOF / REVIEWS
+     ==================================================== -->
+<section class="py-16 bg-cream px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
+      <div>
+        <h2 class="font-display font-black text-navy uppercase text-4xl">Fan Reviews</h2>
+        <div class="flex items-center gap-2 mt-1">
+          <div class="flex text-yellow-400 text-lg">★★★★★</div>
+          <span class="font-bold text-gray-700">4.9</span>
+          <span class="text-gray-500 text-sm">(312 reviews)</span>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="scrollReviews(-1)" class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100">←</button>
+        <button onclick="scrollReviews(1)"  class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100">→</button>
+      </div>
+    </div>
+
+    <div class="reviews-track" id="reviews-track">
+      <!-- Review images are illustrative placeholders; replace with real UGC photos before launch -->
+      <div class="review-card flex-shrink-0">
+        <div class="aspect-video rounded-lg bg-gray-100 overflow-hidden mb-3">
+          <!-- IMAGE PROMPT: Higgsfield/Midjourney — Young man in red USA tee at a packed soccer bar, big screen showing match, crowd energy, shallow DOF, documentary style, golden hour light -->
+          <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400&q=80" alt="Fan at watch party" loading="lazy" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex text-yellow-400 text-sm mb-1">★★★★★</div>
+        <p class="text-gray-700 text-sm italic mb-2">"Wore this to the watch party and got SO many compliments. Quality is way better than I expected for a fan tee."</p>
+        <p class="font-bold text-sm text-navy">Marcus T.</p>
+        <p class="text-gray-400 text-xs">Columbus, OH · Verified Buyer</p>
+      </div>
+
+      <div class="review-card flex-shrink-0">
+        <div class="aspect-video rounded-lg bg-gray-100 overflow-hidden mb-3">
+          <!-- IMAGE PROMPT: Higgsfield/Midjourney — Woman wearing navy hoodie, outdoor tailgate, friends in background, fall light, candid photo, fan energy -->
+          <img src="https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=400&q=80" alt="Fan wearing hoodie" loading="lazy" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex text-yellow-400 text-sm mb-1">★★★★★</div>
+        <p class="text-gray-700 text-sm italic mb-2">"The hoodie is thick, the print hasn't cracked after 8 washes. Ships fast. Already ordered a second one as a gift."</p>
+        <p class="font-bold text-sm text-navy">Daniela R.</p>
+        <p class="text-gray-400 text-xs">Austin, TX · Verified Buyer</p>
+      </div>
+
+      <div class="review-card flex-shrink-0">
+        <div class="aspect-video rounded-lg bg-gray-100 overflow-hidden mb-3">
+          <!-- IMAGE PROMPT: Higgsfield/Midjourney — Group of friends in matching fan gear outside stadium, USA flags, confetti, wide shot, high energy, cinematic -->
+          <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80" alt="Group of fans" loading="lazy" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex text-yellow-400 text-sm mb-1">★★★★★</div>
+        <p class="text-gray-700 text-sm italic mb-2">"Ordered the fan pack bundle for our whole crew. Every piece arrived on time and looked exactly like the photos. 10/10."</p>
+        <p class="font-bold text-sm text-navy">Jordan K.</p>
+        <p class="text-gray-400 text-xs">Seattle, WA · Verified Buyer</p>
+      </div>
+
+      <div class="review-card flex-shrink-0">
+        <div class="aspect-video rounded-lg bg-gray-100 overflow-hidden mb-3">
+          <!-- IMAGE PROMPT: Higgsfield/Midjourney — Close-up of enamel pin on denim jacket, blurred city background, product lifestyle shot, clean and premium feel -->
+          <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt="Enamel pin detail" loading="lazy" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex text-yellow-400 text-sm mb-1">★★★★★</div>
+        <p class="text-gray-700 text-sm italic mb-2">"The enamel pin is surprisingly high quality. Heavy, detailed, no wobble on the post. A keeper for sure."</p>
+        <p class="font-bold text-sm text-navy">Alex M.</p>
+        <p class="text-gray-400 text-xs">Chicago, IL · Verified Buyer</p>
+      </div>
+
+      <div class="review-card flex-shrink-0">
+        <div class="aspect-video rounded-lg bg-gray-100 overflow-hidden mb-3">
+          <!-- IMAGE PROMPT: Higgsfield/Midjourney — Man wearing red snapback at outdoor bar, beer in hand, USA vs opponent on screen, real fan vibe, candid style -->
+          <img src="https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400&q=80" alt="Fan wearing snapback" loading="lazy" class="w-full h-full object-cover" />
+        </div>
+        <div class="flex text-yellow-400 text-sm mb-1">★★★★★</div>
+        <p class="text-gray-700 text-sm italic mb-2">"Hat fits perfect, structured but not stiff. The embroidery is clean. My go-to look for every match this summer."</p>
+        <p class="font-bold text-sm text-navy">Tyler B.</p>
+        <p class="text-gray-400 text-xs">Nashville, TN · Verified Buyer</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 6: HOW IT WORKS
+     ==================================================== -->
+<section class="py-16 px-4" style="background:#fff;">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="font-display font-black text-navy uppercase text-4xl text-center mb-12">How It Works</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="flex flex-col items-center text-center">
+        <div class="step-circle mb-4">1</div>
+        <h3 class="font-bold text-lg text-navy mb-2">Pick Your Gear</h3>
+        <p class="text-gray-500 text-sm">Browse fan-inspired designs. Select your size and tap Quick Add — or go straight to express checkout.</p>
+      </div>
+      <div class="flex flex-col items-center text-center">
+        <div class="step-circle mb-4">2</div>
+        <h3 class="font-bold text-lg text-navy mb-2">We Print & Ship</h3>
+        <p class="text-gray-500 text-sm">Every item is printed on-demand in the USA by skilled craftspeople. Ships to your door in 3–5 business days.</p>
+      </div>
+      <div class="flex flex-col items-center text-center">
+        <div class="step-circle mb-4">3</div>
+        <h3 class="font-bold text-lg text-navy mb-2">Arrive Game-Ready</h3>
+        <p class="text-gray-500 text-sm">Wear it to the watch party, the stadium, or the street. 30-day happiness guarantee — love it or we'll fix it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 7: FAQ
+     ==================================================== -->
+<section class="py-16 bg-cream px-4">
+  <div class="max-w-2xl mx-auto">
+    <h2 class="font-display font-black text-navy uppercase text-4xl text-center mb-10">FAQ</h2>
+    <div class="space-y-3">
+
+      <details class="faq-item bg-white rounded-xl shadow-sm">
+        <summary class="flex items-center justify-between p-5 font-semibold text-navy">
+          How long does shipping take?
+          <span class="faq-icon text-gray-400 ml-4">+</span>
+        </summary>
+        <p class="px-5 pb-5 text-gray-600 text-sm">Orders are printed and ship in 3–5 business days via USPS or UPS. Expedited options available at checkout. International shipping available to select countries.</p>
+      </details>
+
+      <details class="faq-item bg-white rounded-xl shadow-sm">
+        <summary class="flex items-center justify-between p-5 font-semibold text-navy">
+          What's your return policy?
+          <span class="faq-icon text-gray-400 ml-4">+</span>
+        </summary>
+        <p class="px-5 pb-5 text-gray-600 text-sm">30-day happiness guarantee. If you're not completely satisfied, contact us for a free replacement or full refund. No questions asked.</p>
+      </details>
+
+      <details class="faq-item bg-white rounded-xl shadow-sm">
+        <summary class="flex items-center justify-between p-5 font-semibold text-navy">
+          Are these officially licensed products?
+          <span class="faq-icon text-gray-400 ml-4">+</span>
+        </summary>
+        <p class="px-5 pb-5 text-gray-600 text-sm">No — these are 100% fan-inspired original artwork. Home Soil 2026 is not affiliated with FIFA, U.S. Soccer, or any official organizing body. All designs are original creations celebrating the sport and the tournament spirit.</p>
+      </details>
+
+      <details class="faq-item bg-white rounded-xl shadow-sm">
+        <summary class="flex items-center justify-between p-5 font-semibold text-navy">
+          What sizes do you carry?
+          <span class="faq-icon text-gray-400 ml-4">+</span>
+        </summary>
+        <p class="px-5 pb-5 text-gray-600 text-sm">Tees and hoodies run XS–4XL. Hats are one-size-fits-most adjustable. Check the size guide on each product for exact measurements.</p>
+      </details>
+
+      <details class="faq-item bg-white rounded-xl shadow-sm">
+        <summary class="flex items-center justify-between p-5 font-semibold text-navy">
+          How do I track my order?
+          <span class="faq-icon text-gray-400 ml-4">+</span>
+        </summary>
+        <p class="px-5 pb-5 text-gray-600 text-sm">You'll receive an email with a tracking link as soon as your order ships. Orders typically leave our facility within 1–2 business days of printing completion.</p>
+      </details>
+
+      <details class="faq-item bg-white rounded-xl shadow-sm">
+        <summary class="flex items-center justify-between p-5 font-semibold text-navy">
+          Can I customize a design?
+          <span class="faq-icon text-gray-400 ml-4">+</span>
+        </summary>
+        <p class="px-5 pb-5 text-gray-600 text-sm">Group orders of 12+ may qualify for custom name/number additions. Contact us via the footer for bulk pricing and customization options.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 8: FOOTER
+     ==================================================== -->
+<footer class="bg-navy text-white py-12 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8 mb-8">
+      <div>
+        <div class="font-display font-black text-2xl mb-3">HOME SOIL <span style="color:var(--gold)">2026</span></div>
+        <p class="text-sm text-white text-opacity-60 mb-4" style="color:rgba(255,255,255,0.6);">Fan-inspired gear for the greatest tournament on American soil.</p>
+        <div class="flex gap-3">
+          <a href="#" class="w-9 h-9 rounded-full bg-white bg-opacity-10 flex items-center justify-center text-sm hover:bg-opacity-20 transition-colors">f</a>
+          <a href="#" class="w-9 h-9 rounded-full bg-white bg-opacity-10 flex items-center justify-center text-sm hover:bg-opacity-20 transition-colors">ig</a>
+          <a href="#" class="w-9 h-9 rounded-full bg-white bg-opacity-10 flex items-center justify-center text-sm hover:bg-opacity-20 transition-colors">tt</a>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-sm uppercase tracking-widest mb-4" style="color:rgba(255,255,255,0.5);">Shop</h4>
+        <ul class="space-y-2 text-sm" style="color:rgba(255,255,255,0.7);">
+          <li><a href="#products" class="hover:text-white transition-colors">All Products</a></li>
+          <li><a href="#bundles" class="hover:text-white transition-colors">Fan Bundles</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">New Arrivals</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Size Guide</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-bold text-sm uppercase tracking-widest mb-4" style="color:rgba(255,255,255,0.5);">Support</h4>
+        <ul class="space-y-2 text-sm" style="color:rgba(255,255,255,0.7);">
+          <li><a href="#" class="hover:text-white transition-colors">Shipping & Returns</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Track Your Order</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Contact Us</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-white border-opacity-10 pt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4" style="border-color:rgba(255,255,255,0.1);">
+      <!-- REQUIRED DISCLAIMER — Do not remove -->
+      <p class="text-xs" style="color:rgba(255,255,255,0.45);">
+        ⚠️ <strong>Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer.</strong> All designs are original works created independently to celebrate the sport.<br/>
+        © 2026 Home Soil 2026. All rights reserved.
+      </p>
+      <button onclick="openAdminLogin()" class="text-xs hover:text-white transition-colors" style="color:rgba(255,255,255,0.25); background:none; border:none; cursor:pointer;">Owner Login</button>
+    </div>
+  </div>
+</footer>
+
+<!-- ====================================================
+     CART DRAWER
+     ==================================================== -->
+<div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="flex items-center justify-between p-4 border-b border-gray-100">
+    <h2 class="font-bold text-lg text-navy">Your Cart <span id="cart-count-label" class="text-gray-400 font-normal text-base"></span></h2>
+    <button onclick="closeCart()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500">✕</button>
+  </div>
+
+  <!-- Reassurance inside cart -->
+  <div class="mx-4 mt-3 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-700 font-medium flex items-center gap-2">
+    🚚 Free shipping on orders over $75 · 30-day guarantee
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-4" id="cart-items-container">
+    <div id="cart-empty" class="text-center py-16 text-gray-400">
+      <div class="text-5xl mb-3">🛒</div>
+      <p class="font-medium">Your cart is empty</p>
+      <p class="text-sm mt-1">Add some gear to get started</p>
+    </div>
+    <div id="cart-items-list"></div>
+  </div>
+
+  <div id="cart-footer" class="p-4 border-t border-gray-100 bg-white" style="display:none;">
+    <div class="flex justify-between items-center mb-1">
+      <span class="text-sm text-gray-500">Subtotal</span>
+      <span class="font-bold text-navy" id="cart-subtotal">$0.00</span>
+    </div>
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-sm text-gray-500">Shipping</span>
+      <span class="text-sm text-green-600 font-semibold" id="cart-shipping-line">Calculated at checkout</span>
+    </div>
+    <button onclick="openCheckout()" class="btn-primary text-lg font-black">Checkout →</button>
+    <p class="text-xs text-gray-400 text-center mt-2">🔒 Secure checkout · SSL encrypted</p>
+  </div>
+</div>
+
+<!-- ====================================================
+     CHECKOUT MODAL
+     ==================================================== -->
+<div class="modal-overlay" id="checkout-overlay">
+  <div class="checkout-modal" id="checkout-modal">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+      <div class="font-display font-black text-navy text-2xl">HOME SOIL <span style="color:var(--red)">2026</span></div>
+      <button onclick="closeCheckout()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500">✕</button>
+    </div>
+
+    <!-- Confirmation state (hidden until payment simulated) -->
+    <div id="checkout-confirmation" style="display:none;" class="flex-1 flex flex-col items-center justify-center p-12 text-center">
+      <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl mb-6">✅</div>
+      <h2 class="font-display font-black text-navy text-4xl uppercase mb-2">Order Confirmed!</h2>
+      <p class="text-gray-600 mb-2">Thank you! Your fan gear is being printed.</p>
+      <p class="text-sm text-gray-400 mb-1">Paid with <span id="confirm-method" class="font-semibold text-navy"></span></p>
+      <p class="text-sm text-gray-400 mb-8">A confirmation email has been sent to <span id="confirm-email" class="font-semibold text-navy"></span></p>
+      <div class="bg-cream rounded-xl p-5 w-full max-w-sm mb-6">
+        <p class="text-sm font-bold text-navy mb-1">Estimated Delivery</p>
+        <p class="text-gray-600 text-sm">3–5 business days via USPS/UPS</p>
+        <p class="text-gray-400 text-xs mt-1">Tracking sent to your email</p>
+      </div>
+      <div class="bg-navy rounded-xl p-5 w-full max-w-sm text-white mb-6">
+        <p class="text-sm font-bold mb-2">🎁 Create an account to:</p>
+        <ul class="text-sm text-white text-opacity-80 space-y-1 text-left mb-3" style="color:rgba(255,255,255,0.8);">
+          <li>• Track all your orders in one place</li>
+          <li>• Get early access to new drops</li>
+          <li>• Save your shipping details</li>
+        </ul>
+        <button class="w-full bg-white text-navy font-bold py-2 rounded-lg text-sm" onclick="closeCheckout()">Create Account (Optional)</button>
+      </div>
+      <button onclick="closeCheckout()" class="text-gray-400 text-sm hover:text-gray-600">No thanks, continue browsing</button>
+    </div>
+
+    <!-- Main checkout flow -->
+    <div id="checkout-flow" class="checkout-inner flex-1">
+
+      <!-- LEFT: Form -->
+      <div class="checkout-form-col p-6 overflow-y-auto">
+        <h2 class="font-bold text-xl text-navy mb-5">Complete Your Order</h2>
+
+        <!-- TIER 1: Express wallets — research shows this is the #1 conversion lift -->
+        <div class="space-y-3 mb-5">
+          <button class="wallet-btn apple" onclick="simulateExpressPay('Apple Pay')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.3.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Pay with Apple Pay
+          </button>
+          <button class="wallet-btn google" onclick="simulateExpressPay('Google Pay')">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Pay with Google Pay
+          </button>
+          <div class="grid grid-cols-3 gap-2">
+            <button class="wallet-btn paypal text-sm" onclick="simulateExpressPay('PayPal')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7.144 19.532l1.049-6.65.642.012c2.617.048 4.528-.504 5.674-2.059.956-1.285 1.133-2.849.547-4.64-.18-.552-.443-1.035-.764-1.453-.056.344-.136.694-.246 1.049-1.001 3.188-3.91 4.288-7.298 4.288h-.362c-.445 0-.821.327-.89.768l-1.12 7.097-.165 1.046H7.032l.112-.508z"/><path d="M19.211 7.44c-.11 4.243-2.99 7.17-7.836 7.17h-1.052l-1.366 8.67H5.683l.165-1.046 1.12-7.097c.069-.441.445-.768.89-.768h.362c3.388 0 6.297-1.1 7.298-4.288.553-1.763.219-3.294-.747-4.393.636.122 1.193.382 1.62.77.932.844 1.313 2.15 1.12 3.982l-.3-.0z"/></svg>
+              PayPal
+            </button>
+            <button class="wallet-btn venmo text-sm" onclick="simulateExpressPay('Venmo')">
+              <span style="font-weight:900;font-size:1rem">V</span> Venmo
+            </button>
+            <button class="wallet-btn cashapp text-sm" onclick="simulateExpressPay('Cash App')">
+              <span style="font-weight:900;font-size:1rem">$</span> Cash App
+            </button>
+          </div>
+        </div>
+
+        <div class="divider-or mb-5">or pay with card</div>
+
+        <!-- TIER 2: Minimal card form — 7 fields total -->
+        <form id="checkout-form" onsubmit="handleCheckoutSubmit(event)" novalidate>
+          <!-- Email — first because it enables order tracking even if they abandon -->
+          <div class="mb-4">
+            <label class="form-label">Email <span class="text-red-500">*</span></label>
+            <input type="email" id="f-email" class="form-input" placeholder="you@email.com" autocomplete="email" required inputmode="email" />
+          </div>
+
+          <!-- Name -->
+          <div class="mb-4">
+            <label class="form-label">Full Name <span class="text-red-500">*</span></label>
+            <input type="text" id="f-name" class="form-input" placeholder="Jane Smith" autocomplete="name" required />
+          </div>
+
+          <!-- Address with simulated autocomplete -->
+          <div class="mb-4">
+            <label class="form-label">Street Address <span class="text-red-500">*</span></label>
+            <input type="text" id="f-address" class="form-input" placeholder="123 Main St" autocomplete="street-address" required />
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="col-span-1">
+              <label class="form-label">ZIP <span class="text-red-500">*</span></label>
+              <input type="text" id="f-zip" class="form-input" placeholder="10001" autocomplete="postal-code" inputmode="numeric" maxlength="5" required />
+            </div>
+            <div class="col-span-2">
+              <label class="form-label">City, State <span class="text-red-500">*</span></label>
+              <input type="text" id="f-city" class="form-input" placeholder="New York, NY" autocomplete="address-level2" required />
+            </div>
+          </div>
+
+          <!-- Card number -->
+          <div class="mb-4">
+            <label class="form-label">Card Number <span class="text-red-500">*</span></label>
+            <input type="text" id="f-card" class="form-input" placeholder="1234 5678 9012 3456" inputmode="numeric" maxlength="19" autocomplete="cc-number" required oninput="formatCardNumber(this)" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-5">
+            <div>
+              <label class="form-label">Expiry <span class="text-red-500">*</span></label>
+              <input type="text" id="f-expiry" class="form-input" placeholder="MM / YY" inputmode="numeric" maxlength="7" autocomplete="cc-exp" required oninput="formatExpiry(this)" />
+            </div>
+            <div>
+              <label class="form-label">CVV <span class="text-red-500">*</span></label>
+              <input type="text" id="f-cvv" class="form-input" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc" required />
+            </div>
+          </div>
+
+          <!-- Trust signals immediately next to Pay button — research shows +18% completion -->
+          <div class="bg-cream rounded-xl p-4 mb-4">
+            <div class="flex flex-wrap gap-3 text-xs text-gray-500 justify-center">
+              <span class="secure-badge">🔒 256-bit SSL</span>
+              <span class="secure-badge">✅ 30-Day Guarantee</span>
+              <span class="secure-badge">🔄 Free Returns</span>
+              <span class="secure-badge">📦 Ships in 3–5 Days</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary text-xl font-black py-5" id="pay-btn">
+            Place Order — <span id="checkout-total-btn">$0.00</span>
+          </button>
+
+          <p class="text-xs text-gray-400 text-center mt-3">
+            🔒 This is a demo simulation. No real payment is processed.<br/>
+            Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer.
+          </p>
+        </form>
+      </div>
+
+      <!-- RIGHT: Order Summary -->
+      <div class="checkout-summary-col bg-cream p-6 border-t md:border-t-0 md:border-l border-gray-200 overflow-y-auto">
+        <h3 class="font-bold text-base text-navy mb-4">Order Summary</h3>
+
+        <div id="checkout-summary-items" class="space-y-3 mb-4"></div>
+
+        <div class="border-t border-gray-200 pt-4 space-y-2">
+          <div class="flex justify-between text-sm text-gray-600">
+            <span>Subtotal</span><span id="checkout-sub">$0.00</span>
+          </div>
+          <div class="flex justify-between text-sm text-gray-600">
+            <!-- Show shipping upfront — no surprise costs -->
+            <span>Shipping</span>
+            <span id="checkout-ship" class="text-green-600 font-semibold">FREE over $75</span>
+          </div>
+          <div class="flex justify-between text-sm text-gray-600">
+            <span>Est. Tax (8%)</span><span id="checkout-tax">$0.00</span>
+          </div>
+          <div class="flex justify-between font-black text-lg text-navy border-t border-gray-200 pt-3 mt-3">
+            <span>Total</span><span id="checkout-total">$0.00</span>
+          </div>
+        </div>
+
+        <div class="mt-4 bg-white rounded-xl p-4 border border-gray-200">
+          <p class="text-xs font-bold text-navy mb-1">🇺🇸 Printed in USA</p>
+          <p class="text-xs text-gray-500">Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer. Ships 3–5 business days.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     ADMIN LOGIN MODAL
+     ==================================================== -->
+<div class="modal-overlay admin-modal" id="admin-login-modal">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+    <div class="font-display font-black text-navy text-3xl mb-1">Admin Login</div>
+    <!-- SECURITY NOTE: This is a demo-only password check. NOT real security. -->
+    <!-- In production, use Supabase Auth or a real auth provider. NEVER store passwords in client-side JS for real deployments. -->
+    <p class="text-xs text-red-500 font-semibold mb-5">⚠️ Demo only — not real security</p>
+    <input type="password" id="admin-pw-input" class="form-input mb-4" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkAdminLogin()" />
+    <button onclick="checkAdminLogin()" class="btn-primary mb-3">Login</button>
+    <p id="admin-login-err" class="text-red-500 text-sm text-center" style="display:none;">Incorrect password</p>
+    <button onclick="closeAdminLogin()" class="w-full text-gray-400 text-sm mt-2 hover:text-gray-600 transition-colors" style="background:none;border:none;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<!-- ====================================================
+     ADMIN DASHBOARD MODAL
+     ==================================================== -->
+<div class="modal-overlay admin-modal" id="admin-dashboard-modal">
+  <div class="bg-white rounded-2xl w-full max-w-5xl max-h-screen-90 overflow-hidden flex flex-col shadow-2xl" style="max-height:92vh;">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div class="font-display font-black text-navy text-2xl">Admin Dashboard</div>
+      <button onclick="closeAdminDashboard()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500">✕</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2 px-6 py-3 border-b border-gray-100">
+      <button class="admin-tab-btn active" onclick="switchAdminTab('products', this)">📦 Products</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('ads', this)">📣 Ad Generator</button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-6">
+
+      <!-- PRODUCTS TAB -->
+      <div id="admin-tab-products">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-lg text-navy">Manage Products</h3>
+          <button onclick="showAddProductForm()" class="bg-navy text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors">+ Add Product</button>
+        </div>
+        <div id="admin-product-table" class="space-y-3"></div>
+      </div>
+
+      <!-- ADS TAB -->
+      <div id="admin-tab-ads" style="display:none;">
+        <h3 class="font-bold text-lg text-navy mb-1">AI Ad Generator (Higgsfield / Midjourney)</h3>
+        <p class="text-sm text-gray-500 mb-5">Select a product and format to get high-converting ad prompts.</p>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-5">
+          <div>
+            <label class="form-label">Product</label>
+            <select id="ad-product-select" class="form-input" onchange="updateAdPrompt()">
+              <option value="">Select a product...</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Format / Platform</label>
+            <select id="ad-format-select" class="form-input" onchange="updateAdPrompt()">
+              <option value="instagram_reel">Instagram / TikTok Reel</option>
+              <option value="facebook_ad">Facebook / YouTube Ad</option>
+              <option value="ugc">UGC Testimonial</option>
+              <option value="cinematic">Cinematic Lifestyle</option>
+              <option value="watch_party">Watch Party Energy</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <p class="font-bold text-sm text-navy">Generated Prompt Template</p>
+            <button onclick="copyAdPrompt()" class="bg-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-900 transition-colors">Copy Prompt</button>
+          </div>
+          <pre id="ad-prompt-output" class="text-xs text-gray-700 whitespace-pre-wrap font-mono bg-white border border-gray-200 rounded-lg p-3" style="min-height:80px;">Select a product and format above to generate a prompt.</pre>
+        </div>
+
+        <button onclick="generate5AdIdeas()" class="btn-primary mb-5">🎯 Generate 5 Ad Ideas</button>
+
+        <div id="ad-ideas-output" class="space-y-4" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ====================================================
+     JAVASCRIPT
+     ==================================================== -->
+<script>
+// ===================================================
+// PRODUCT DATA — edit prices, stock, descriptions here
+// All artwork is fan-inspired original work.
+// Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer.
+// ===================================================
+const PRODUCTS = [
+  {
+    id: 'hs-tee-001',
+    name: 'Home Soil Premium Tee',
+    price: 34,
+    stock: 42,
+    description: 'Heavyweight 100% cotton. Fan-inspired "Home Soil 2026" graphic on chest. Unisex fit, preshrunk.',
+    // IMAGE: Higgsfield/Midjourney — Athletic man mid-30s wearing bold red graphic tee at outdoor watch party, golden evening light, crowd blurred behind, candid energy, 85mm f/1.8
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
+    sizes: ['XS','S','M','L','XL','2XL','3XL'],
+    category: 'tees'
+  },
+  {
+    id: 'hs-tee-002',
+    name: '"Stars & Stripes" Graphic Tee',
+    price: 32,
+    stock: 8,
+    description: 'Stars, stripes, and soccer energy. Soft ring-spun cotton, slim fit. Fan-inspired original artwork.',
+    // IMAGE: Higgsfield/Midjourney — Young woman laughing at tailgate, wearing white graphic tee with bold American design, warm bokeh background of tailgate setup, natural light
+    image: 'https://images.unsplash.com/photo-1503341733017-1901578f9f1e?w=600&q=80',
+    sizes: ['XS','S','M','L','XL','2XL'],
+    category: 'tees'
+  },
+  {
+    id: 'hs-hoodie-001',
+    name: 'Home Soil Fleece Hoodie',
+    price: 64,
+    stock: 23,
+    description: '12 oz. premium fleece. Kangaroo pocket, drawstring hood. Bold chest graphic. Washed navy.',
+    // IMAGE: Higgsfield/Midjourney — Man in navy hoodie standing outside stadium at dusk, stadium lights beginning to glow, fan scarf around neck, cinematic wide shot, cool blue tones
+    image: 'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600&q=80',
+    sizes: ['XS','S','M','L','XL','2XL','3XL','4XL'],
+    category: 'hoodies'
+  },
+  {
+    id: 'hs-hoodie-002',
+    name: '"We Are Home" Pullover',
+    price: 68,
+    stock: 15,
+    description: 'Ultra-soft pullover hoodie. Large back graphic, subtle front logo. Perfect for the stadium or the street.',
+    // IMAGE: Higgsfield/Midjourney — Group of friends in matching hoodies at watch party bar, hands raised mid-cheer, big screen in background, motion blur on crowd, joyful energy, 24mm wide angle
+    image: 'https://images.unsplash.com/photo-1445106577-23aa32fffcec?w=600&q=80',
+    sizes: ['S','M','L','XL','2XL','3XL'],
+    category: 'hoodies'
+  },
+  {
+    id: 'hs-hat-001',
+    name: 'Stars & Stripes Snapback',
+    price: 28,
+    stock: 34,
+    description: 'Structured 6-panel snapback. Embroidered stars & 2026 on front panel. One size, adjustable.',
+    // IMAGE: Higgsfield/Midjourney — Close-up of man wearing red/white/navy snapback, slight tilt, street style, shallow depth of field, stadium in background soft-focus, golden hour
+    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
+    sizes: ['One Size'],
+    category: 'hats'
+  },
+  {
+    id: 'hs-hat-002',
+    name: 'Home Soil Dad Hat',
+    price: 24,
+    stock: 29,
+    description: 'Unstructured low-profile cap. Vintage wash. Embroidered script logo. Adjustable strap.',
+    // IMAGE: Higgsfield/Midjourney — Young woman wearing vintage washed dad hat, outdoor rooftop bar, summer vibes, sunset in background, casual fan energy, lifestyle photo
+    image: 'https://images.unsplash.com/photo-1570540073428-dfd5bcd34b06?w=600&q=80',
+    sizes: ['One Size'],
+    category: 'hats'
+  },
+  {
+    id: 'hs-scarf-001',
+    name: 'Red/White/Blue Fan Scarf',
+    price: 22,
+    stock: 45,
+    description: 'Woven jacquard supporter scarf. Classic fan scarf format. Machine washable. 100% acrylic.',
+    // IMAGE: Higgsfield/Midjourney — Two fans holding woven scarf overhead in stadium stands, red white blue colors prominent, crowd energy behind them, match day atmosphere
+    image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&q=80',
+    sizes: ['One Size'],
+    category: 'accessories'
+  },
+  {
+    id: 'hs-pin-001',
+    name: 'Limited Edition 2026 Enamel Pin',
+    price: 12,
+    stock: 6,
+    description: 'Hard enamel, 1.5" diameter. Gold metal base. Rubber clutch back. Limited run of 500.',
+    // IMAGE: Higgsfield/Midjourney — Premium product flat lay, enamel pin on denim jacket pocket, white marble surface accent, soft studio lighting, close-up macro lens, clean and premium feel
+    image: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600&q=80',
+    sizes: ['One Size'],
+    category: 'accessories'
+  },
+  {
+    id: 'hs-tee-003',
+    name: '"Pitch Perfect" Vintage Tee',
+    price: 36,
+    stock: 19,
+    description: 'Garment-dyed vintage wash tee. Distressed "1994 → 2026" call-back graphic. Oversized fit.',
+    // IMAGE: Higgsfield/Midjourney — Person wearing oversized vintage wash tee, relaxed pose, brick wall background, golden afternoon light, Americana street style, editorial photo
+    image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80',
+    sizes: ['S','M','L','XL','2XL'],
+    category: 'tees'
+  },
+  {
+    id: 'hs-pin-002',
+    name: 'Soccer Star Enamel Pin Set (3-pack)',
+    price: 30,
+    stock: 11,
+    description: 'Three collectible hard enamel pins: Soccer Ball, Boot, and Trophy. Gift-boxed.',
+    // IMAGE: Higgsfield/Midjourney — Flat lay of three colorful enamel pins on white card backing, gift box nearby, product photography, clean studio lighting, premium packaging
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
+    sizes: ['One Size'],
+    category: 'accessories'
+  }
+];
+
+// ===================================================
+// CART STATE
+// ===================================================
+let cart = JSON.parse(localStorage.getItem('hs2026-cart') || '[]');
+
+function saveCart() {
+  localStorage.setItem('hs2026-cart', JSON.stringify(cart));
+  updateCartUI();
+}
+
+function cartTotal() {
+  return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+}
+
+function cartCount() {
+  return cart.reduce((sum, item) => sum + item.qty, 0);
+}
+
+function addToCart(productId, size, qty = 1) {
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (!product) return;
+  const key = productId + '-' + size;
+  const existing = cart.find(c => c.key === key);
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({ key, productId, name: product.name, price: product.price, size, qty, image: product.image });
+  }
+  saveCart();
+  showToast(`${product.name} added to cart`);
+}
+
+function removeFromCart(key) {
+  cart = cart.filter(c => c.key !== key);
+  saveCart();
+}
+
+function updateCartQty(key, delta) {
+  const item = cart.find(c => c.key === key);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) removeFromCart(key);
+  else saveCart();
+}
+
+function updateCartUI() {
+  const count = cartCount();
+  const badge = document.getElementById('cart-badge');
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'flex' : 'none';
+
+  document.getElementById('cart-count-label').textContent = count > 0 ? `(${count})` : '';
+
+  const list = document.getElementById('cart-items-list');
+  const empty = document.getElementById('cart-empty');
+  const footer = document.getElementById('cart-footer');
+
+  if (cart.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    footer.style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    footer.style.display = 'block';
+    list.innerHTML = cart.map(item => `
+      <div class="flex gap-3 pb-3 mb-3 border-b border-gray-100">
+        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-sm text-navy truncate">${item.name}</p>
+          <p class="text-xs text-gray-400">${item.size}</p>
+          <div class="flex items-center justify-between mt-2">
+            <div class="flex items-center gap-2">
+              <button onclick="updateCartQty('${item.key}',-1)" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100">−</button>
+              <span class="text-sm font-semibold">${item.qty}</span>
+              <button onclick="updateCartQty('${item.key}',1)" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100">+</button>
+            </div>
+            <span class="text-sm font-bold text-navy">$${(item.price * item.qty).toFixed(2)}</span>
+          </div>
+        </div>
+        <button onclick="removeFromCart('${item.key}')" class="text-gray-300 hover:text-red-500 text-lg self-start flex-shrink-0 transition-colors">✕</button>
+      </div>
+    `).join('');
+  }
+
+  const total = cartTotal();
+  document.getElementById('cart-subtotal').textContent = '$' + total.toFixed(2);
+  document.getElementById('cart-shipping-line').textContent = total >= 75 ? 'FREE' : '$6.99';
+  document.getElementById('cart-shipping-line').className = total >= 75 ? 'text-sm text-green-600 font-semibold' : 'text-sm text-gray-600';
+}
+
+// ===================================================
+// PRODUCT GRID
+// ===================================================
+function renderProducts(filter = 'all') {
+  const grid = document.getElementById('product-grid');
+  const filtered = filter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.category === filter);
+
+  grid.innerHTML = filtered.map(p => {
+    const isLow = p.stock <= 10;
+    const isNew = p.stock > 35;
+    return `
+      <div class="product-card" data-id="${p.id}">
+        <div class="product-img-wrap">
+          <img src="${p.image}" alt="${p.name}" loading="lazy" />
+          ${isLow ? `<span class="stock-badge low">⚡ Only ${p.stock} left</span>` : ''}
+          ${isNew && !isLow ? `<span class="stock-badge new">NEW</span>` : ''}
+        </div>
+        <div class="p-3">
+          <p class="font-bold text-sm text-navy leading-snug mb-0.5">${p.name}</p>
+          <!-- Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer. -->
+          <p class="text-red-600 font-black text-lg mb-2">$${p.price}</p>
+          <div class="flex flex-wrap gap-1 mb-3" id="sizes-${p.id}">
+            ${p.sizes.map((s, i) => `<button class="size-btn ${i===0?'active':''}" data-size="${s}" onclick="selectSize('${p.id}','${s}',this)">${s}</button>`).join('')}
+          </div>
+          <div class="grid grid-cols-1 gap-2">
+            <button class="btn-quick-add" onclick="quickAdd('${p.id}')">+ Quick Add</button>
+            <button class="btn-buy-now" onclick="buyNow('${p.id}')">Buy Now</button>
+          </div>
+          <p class="text-gray-400 text-xs mt-2 text-center">Fan-inspired • Not affiliated with FIFA or U.S. Soccer</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectSize(productId, size, btn) {
+  const container = document.getElementById('sizes-' + productId);
+  container.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function getSelectedSize(productId) {
+  const container = document.getElementById('sizes-' + productId);
+  if (!container) return null;
+  const active = container.querySelector('.size-btn.active');
+  return active ? active.dataset.size : null;
+}
+
+function quickAdd(productId) {
+  const size = getSelectedSize(productId);
+  if (!size) { showToast('Please select a size'); return; }
+  addToCart(productId, size);
+  openCart();
+}
+
+function buyNow(productId) {
+  const size = getSelectedSize(productId);
+  if (!size) { showToast('Please select a size'); return; }
+  addToCart(productId, size);
+  openCheckout();
+}
+
+function filterProducts(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
+  btn.classList.add('active-filter');
+  renderProducts(filter);
+}
+
+// ===================================================
+// BUNDLES
+// ===================================================
+function addBundle(bundleId) {
+  if (bundleId === 'fan-pack') {
+    cart.push({ key: 'bundle-fan-pack', productId: 'bundle', name: 'USA Fan Pack Bundle', price: 54, size: 'Bundle', qty: 1, image: PRODUCTS[0].image });
+  } else if (bundleId === 'watch-party') {
+    cart.push({ key: 'bundle-watch-party', productId: 'bundle', name: 'Watch Party Kit Bundle', price: 72, size: 'Bundle', qty: 1, image: PRODUCTS[2].image });
+  }
+  saveCart();
+  showToast('Bundle added to cart!');
+  openCart();
+}
+
+// ===================================================
+// CART DRAWER
+// ===================================================
+function openCart() {
+  document.getElementById('cart-overlay').classList.add('open');
+  document.getElementById('cart-drawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCart() {
+  document.getElementById('cart-overlay').classList.remove('open');
+  document.getElementById('cart-drawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ===================================================
+// CHECKOUT
+// ===================================================
+function openCheckout() {
+  if (cart.length === 0) { showToast('Your cart is empty'); return; }
+  closeCart();
+  // Always show the form (not a leftover confirmation) when reopening
+  document.getElementById('checkout-flow').style.display = '';
+  document.getElementById('checkout-confirmation').style.display = 'none';
+  updateCheckoutSummary();
+  document.getElementById('checkout-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCheckout() {
+  document.getElementById('checkout-overlay').classList.remove('open');
+  document.getElementById('checkout-flow').style.display = '';
+  document.getElementById('checkout-confirmation').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function updateCheckoutSummary() {
+  const summaryEl = document.getElementById('checkout-summary-items');
+  summaryEl.innerHTML = cart.map(item => `
+    <div class="flex gap-3">
+      <div class="relative flex-shrink-0">
+        <img src="${item.image}" alt="${item.name}" class="w-14 h-14 rounded-lg object-cover" loading="lazy" />
+        <span class="absolute -top-1.5 -right-1.5 bg-gray-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">${item.qty}</span>
+      </div>
+      <div class="flex-1">
+        <p class="text-sm font-semibold text-navy">${item.name}</p>
+        <p class="text-xs text-gray-400">${item.size}</p>
+      </div>
+      <p class="text-sm font-bold text-navy">$${(item.price * item.qty).toFixed(2)}</p>
+    </div>
+  `).join('');
+
+  const sub = cartTotal();
+  const ship = sub >= 75 ? 0 : 6.99;
+  const tax = sub * 0.08;
+  const total = sub + ship + tax;
+
+  document.getElementById('checkout-sub').textContent = '$' + sub.toFixed(2);
+  document.getElementById('checkout-ship').textContent = ship === 0 ? 'FREE' : '$6.99';
+  document.getElementById('checkout-ship').className = ship === 0 ? 'text-green-600 font-semibold' : 'text-gray-600';
+  document.getElementById('checkout-tax').textContent = '$' + tax.toFixed(2);
+  document.getElementById('checkout-total').textContent = '$' + total.toFixed(2);
+  document.getElementById('checkout-total-btn').textContent = '$' + total.toFixed(2);
+}
+
+let orderProcessing = false;
+
+function simulateExpressPay(method) {
+  if (orderProcessing) return;
+  if (cart.length === 0) { showToast('Your cart is empty'); return; }
+  // Express wallets don't need the card form — but capture email if already typed
+  const email = (document.getElementById('f-email').value || '').trim() || 'guest@homesoil2026.com';
+  processPayment(email, method);
+}
+
+// Inline validation helper — marks a field and returns whether it's valid
+function markField(id, ok) {
+  const el = document.getElementById(id);
+  el.style.borderColor = ok ? '' : '#dc2626';
+  el.style.boxShadow = ok ? '' : '0 0 0 3px rgba(220,38,38,0.12)';
+  return ok;
+}
+
+function handleCheckoutSubmit(e) {
+  e.preventDefault();
+  if (orderProcessing) return;
+  if (cart.length === 0) { showToast('Your cart is empty'); return; }
+
+  const email  = document.getElementById('f-email').value.trim();
+  const name   = document.getElementById('f-name').value.trim();
+  const addr   = document.getElementById('f-address').value.trim();
+  const zip    = document.getElementById('f-zip').value.trim();
+  const city   = document.getElementById('f-city').value.trim();
+  const card   = document.getElementById('f-card').value.replace(/\s/g,'');
+  const expiry = document.getElementById('f-expiry').value.replace(/\D/g,'');
+  const cvv    = document.getElementById('f-cvv').value.trim();
+
+  let valid = true;
+  valid = markField('f-email',  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) && valid;
+  valid = markField('f-name',   name.length >= 2) && valid;
+  valid = markField('f-address',addr.length >= 4) && valid;
+  valid = markField('f-zip',    /^\d{5}$/.test(zip)) && valid;
+  valid = markField('f-city',   city.length >= 2) && valid;
+  valid = markField('f-card',   card.length >= 15) && valid;
+  valid = markField('f-expiry', expiry.length === 4) && valid;
+  valid = markField('f-cvv',    /^\d{3,4}$/.test(cvv)) && valid;
+
+  if (!valid) { showToast('Please check the highlighted fields'); return; }
+  processPayment(email, 'Card');
+}
+
+function processPayment(email, method) {
+  orderProcessing = true;
+  const btn = document.getElementById('pay-btn');
+  const original = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.innerHTML = 'Processing payment…'; }
+
+  // Simulate a short, realistic processing delay (no real charge occurs)
+  setTimeout(function() {
+    completeOrder(email, method);
+    orderProcessing = false;
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.innerHTML = original; }
+  }, 900);
+}
+
+function completeOrder(email, method) {
+  // Simulate successful order placement
+  document.getElementById('checkout-flow').style.display = 'none';
+  document.getElementById('checkout-confirmation').style.display = 'flex';
+  document.getElementById('confirm-email').textContent = email;
+  const methodNote = document.getElementById('confirm-method');
+  if (methodNote) methodNote.textContent = method;
+  cart = [];
+  saveCart();
+}
+
+// ===================================================
+// CARD INPUT FORMATTERS
+// ===================================================
+function formatCardNumber(input) {
+  let v = input.value.replace(/\D/g,'').substring(0,16);
+  input.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+
+function formatExpiry(input) {
+  let v = input.value.replace(/\D/g,'');
+  if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2,4);
+  input.value = v;
+}
+
+// ===================================================
+// COUNTDOWN TIMER
+// ===================================================
+function updateCountdown() {
+  const target = new Date('2026-06-11T16:00:00-04:00'); // Opening match kickoff
+  const now = new Date();
+  const diff = target - now;
+  if (diff <= 0) {
+    document.getElementById('countdown-display').innerHTML = '<p class="text-white font-bold text-xl">⚽ The World Cup is HERE!</p>';
+    return;
+  }
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-days').textContent = String(days).padStart(3,'0');
+  document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
+  document.getElementById('cd-mins').textContent = String(mins).padStart(2,'0');
+  document.getElementById('cd-secs').textContent = String(secs).padStart(2,'0');
+}
+
+// ===================================================
+// REVIEWS CAROUSEL
+// ===================================================
+function scrollReviews(dir) {
+  const track = document.getElementById('reviews-track');
+  track.scrollBy({ left: dir * 300, behavior: 'smooth' });
+}
+
+// ===================================================
+// TOAST
+// ===================================================
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ===================================================
+// ADMIN
+// ===================================================
+// Demo password — NOT real security. Use Supabase Auth in production.
+const ADMIN_PASSWORD = 'admin2026';
+
+function openAdminLogin() {
+  document.getElementById('admin-login-modal').classList.add('open');
+}
+
+function closeAdminLogin() {
+  document.getElementById('admin-login-modal').classList.remove('open');
+  document.getElementById('admin-pw-input').value = '';
+  document.getElementById('admin-login-err').style.display = 'none';
+}
+
+function checkAdminLogin() {
+  const pw = document.getElementById('admin-pw-input').value;
+  if (pw === ADMIN_PASSWORD) {
+    closeAdminLogin();
+    openAdminDashboard();
+  } else {
+    document.getElementById('admin-login-err').style.display = 'block';
+  }
+}
+
+// When true, the dashboard opens straight to the Ads tab (used by "See the Ads" CTA)
+let adminWantsAdsTab = false;
+
+function openAdmin() {
+  // Called from "See the Ads" CTA — prompt for login, then land on the Ads tab
+  adminWantsAdsTab = true;
+  openAdminLogin();
+}
+
+function openAdminDashboard() {
+  document.getElementById('admin-dashboard-modal').classList.add('open');
+  renderAdminProducts();
+  populateAdProductSelect();
+  if (adminWantsAdsTab) {
+    const adsBtn = document.querySelectorAll('.admin-tab-btn')[1];
+    switchAdminTab('ads', adsBtn);
+    adminWantsAdsTab = false;
+  } else {
+    switchAdminTab('products', document.querySelector('.admin-tab-btn'));
+  }
+}
+
+function closeAdminDashboard() {
+  document.getElementById('admin-dashboard-modal').classList.remove('open');
+}
+
+function renderAdminProducts() {
+  const container = document.getElementById('admin-product-table');
+  container.innerHTML = PRODUCTS.map((p, i) => `
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+      <div class="flex gap-4 items-start">
+        <img src="${p.image}" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+        <div class="flex-1 min-w-0">
+          <p class="font-bold text-navy text-sm mb-2">${p.name}</p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div>
+              <label class="form-label">Price ($)</label>
+              <input type="number" value="${p.price}" class="form-input text-sm" onchange="PRODUCTS[${i}].price = parseFloat(this.value); renderProducts(); updateCheckoutSummary();" />
+            </div>
+            <div>
+              <label class="form-label">Stock</label>
+              <input type="number" value="${p.stock}" class="form-input text-sm" onchange="PRODUCTS[${i}].stock = parseInt(this.value); renderProducts();" />
+            </div>
+            <div class="col-span-2">
+              <label class="form-label">Image URL</label>
+              <input type="url" value="${p.image}" class="form-input text-sm" onchange="PRODUCTS[${i}].image = this.value; renderProducts();" />
+            </div>
+          </div>
+          <div class="mt-2">
+            <label class="form-label">Description</label>
+            <textarea class="form-input text-sm" rows="2" onchange="PRODUCTS[${i}].description = this.value;">${p.description}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showAddProductForm() {
+  const newId = 'hs-new-' + Date.now();
+  PRODUCTS.push({
+    id: newId, name: 'New Product', price: 30, stock: 20,
+    description: 'Product description here.',
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
+    sizes: ['S','M','L','XL'], category: 'tees'
+  });
+  renderAdminProducts();
+  renderProducts();
+  showToast('New product added — edit the details above');
+}
+
+function switchAdminTab(tab, btn) {
+  document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('admin-tab-products').style.display = tab === 'products' ? 'block' : 'none';
+  document.getElementById('admin-tab-ads').style.display = tab === 'ads' ? 'block' : 'none';
+}
+
+// ===================================================
+// AD GENERATOR
+// ===================================================
+const AD_TEMPLATES = {
+  instagram_reel: (p) => `INSTAGRAM / TIKTOK REEL PROMPT (Higgsfield AI or Midjourney Video)
+
+Subject: Real fan wearing the "${p.name}" at a packed watch party
+Setting: Outdoor bar/patio, big screen in background showing USA match, golden hour
+Motion: Camera slowly pulls back revealing cheering crowd, subject raises fist in celebration
+Lighting: Warm cinematic golden hour, slight lens flare
+Audio cue: Rising crowd roar, goal horn, "Let's go USA" chant
+Color grade: Vivid, saturated reds and blues, high contrast
+Format: 9:16 vertical, 15-30 seconds
+
+CAPTION TEMPLATE:
+"The one time it's acceptable to lose your voice 🇺🇸⚽ Get your ${p.name} before they're gone — link in bio.
+#WorldCup2026 #USAsoccer #HomeSoil2026 #fanmerch"`,
+
+  facebook_ad: (p) => `FACEBOOK / YOUTUBE AD PROMPT (Higgsfield AI)
+
+Hook (0-3s): Close-up of "${p.name}" being unboxed, hands excited, natural light
+Middle (3-15s): Cut to fan wearing it at watch party, crowd reacting to USA goal, authentic joy
+CTA (15-20s): Product on clean white background, price displayed, "Order Now" text overlay
+Voiceover: "The World Cup is coming home. Gear up in fan-inspired original designs — printed right here in the USA."
+Tone: Authentic, proud, energetic — NOT salesy
+Format: 16:9 (YouTube) + 1:1 (Facebook feed) + 9:16 (Stories)
+Color grade: Bold, punchy, patriotic but not cliché
+
+HEADLINE: "The World Cup Comes Home — Gear Up"
+SUBHEADLINE: "${p.name} · Fan-Inspired · Printed in USA · Ships 3-5 Days"
+CTA BUTTON: "Shop Now"`,
+
+  ugc: (p) => `UGC TESTIMONIAL PROMPT (Higgsfield AI / Real customer ask)
+
+Creator type: Real fan, 25-40, diverse backgrounds, genuine energy
+Setting: Their living room / bar / backyard — real environment, not a studio
+Script:
+"[Direct to camera] Okay so I ordered this ${p.name} and honestly I was skeptical.
+[Shows product close up] Look at this quality though. The print is thick, the material is premium.
+[Puts it on] And I wore it to the watch party last weekend — I got so many questions about it.
+[Back to camera] If you're watching the World Cup this summer you NEED to grab one before they sell out."
+Style: Phone-shot, authentic, no script feel, natural lighting
+Format: 9:16, 30-45 seconds`,
+
+  cinematic: (p) => `CINEMATIC LIFESTYLE PROMPT (Higgsfield AI / Midjourney)
+
+Scene: Golden hour, city street or stadium exterior
+Subject: Person wearing "${p.name}", walking confidently, fan scarf optional
+Camera: Tracking shot, 24mm lens equivalent, cinematic aspect ratio 2.35:1
+Lighting: Warm backlit golden hour, rim light on subject, slight atmospheric haze
+Mood: Pride, anticipation, summer energy — the feeling of a once-in-a-generation moment
+Color grade: Film emulation, lifted shadows, warm highlights, slightly desaturated
+Text overlay (optional): "HOME SOIL · SUMMER 2026"
+Sound design: Distant crowd ambience, soft stadium atmosphere`,
+
+  watch_party: (p) => `WATCH PARTY ENERGY PROMPT (Higgsfield AI)
+
+Setting: Packed sports bar or rooftop party, dozens of fans visible
+Hero fan: Wearing "${p.name}", center frame, surrounded by matching-energy friends
+Moment: USA scores — pure explosion of joy, arms in the air, jumping, high-fives
+Camera: Handheld energy, slight motion blur on crowd, hero fan sharp
+Lighting: Mixed tungsten bar lighting + TV/screen glow, energetic and real
+Style: Documentary meets advertisement — authentic but composed
+Contrast: Show the PRE-goal tension (2 seconds) then the EXPLOSION — tells a story
+Caption: "This summer, every American becomes a soccer fan. Are you ready? 🇺🇸⚽"
+Format: 9:16 + 1:1 crop`
+};
+
+function populateAdProductSelect() {
+  const sel = document.getElementById('ad-product-select');
+  sel.innerHTML = '<option value="">Select a product...</option>' +
+    PRODUCTS.map(p => `<option value="${p.id}">${p.name} ($${p.price})</option>`).join('');
+}
+
+function updateAdPrompt() {
+  const productId = document.getElementById('ad-product-select').value;
+  const format = document.getElementById('ad-format-select').value;
+  const output = document.getElementById('ad-prompt-output');
+  if (!productId) { output.textContent = 'Select a product and format above to generate a prompt.'; return; }
+  const product = PRODUCTS.find(p => p.id === productId);
+  const template = AD_TEMPLATES[format];
+  output.textContent = template ? template(product) : '';
+}
+
+function copyAdPrompt() {
+  const text = document.getElementById('ad-prompt-output').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Prompt copied!'));
+}
+
+function generate5AdIdeas() {
+  const productId = document.getElementById('ad-product-select').value;
+  if (!productId) { showToast('Select a product first'); return; }
+  const product = PRODUCTS.find(p => p.id === productId);
+
+  const ideas = [
+    {
+      angle: '1. The "Countdown" Hook',
+      hook: `"${daysUntilWorldCup()} days left. Have you grabbed your gear yet?"`,
+      visual: `Fast-cut montage: countdown clock → "${product.name}" arriving in box → fan putting it on → match day energy`,
+      caption: `Tick tock. The World Cup is coming home and you are NOT showing up unprepared. ${product.name} — link in bio. 🇺🇸⚽ #WorldCup2026`
+    },
+    {
+      angle: '2. The "Regret Proof" Hook',
+      hook: `"Don't be the only one at the watch party without USA gear."`,
+      visual: `Pan across watch party crowd — everyone in gear, one person in regular clothes looking awkward → cut to product unboxing`,
+      caption: `True story: you will regret not ordering early. Ships in 3–5 days. Grab the ${product.name} now. #HomeSoil2026`
+    },
+    {
+      angle: '3. The "Made in USA" Patriot Hook',
+      hook: `"This is what it looks like when the World Cup comes home."`,
+      visual: `Cinematic pan of American cityscape → fans in gear → product close-up → "Printed in USA" text card`,
+      caption: `Fan-inspired original designs, printed right here in the USA. The ${product.name} — for the most American summer ever. 🇺🇸`
+    },
+    {
+      angle: '4. The Social Proof Hook',
+      hook: `"312 fans can't be wrong."`,
+      visual: `Rapid-fire UGC-style clips: different fans wearing the product, all different cities, all 5-star moments`,
+      caption: `"Got so many compliments at the watch party." — Marcus T., Columbus 🙌 Get your ${product.name}: link in bio.`
+    },
+    {
+      angle: '5. The Scarcity Hook',
+      hook: `"Only ${product.stock} left and the tournament hasn't even started."`,
+      visual: `Product page showing stock counter dropping → fans buying → "SOLD OUT" near-miss → last units available`,
+      caption: `These are going fast. Once we're out, we're out — no restocks until after the tournament. Grab the ${product.name} now. ⚡`
+    }
+  ];
+
+  const container = document.getElementById('ad-ideas-output');
+  container.style.display = 'block';
+  container.innerHTML = `<h4 class="font-bold text-navy text-base mb-3">5 Ad Angles for: ${product.name}</h4>` +
+    ideas.map(idea => `
+      <div class="bg-white border border-gray-200 rounded-xl p-4 mb-3">
+        <p class="font-bold text-navy text-sm mb-2">${idea.angle}</p>
+        <div class="grid md:grid-cols-3 gap-3 text-sm">
+          <div><p class="text-xs font-semibold text-gray-400 uppercase mb-1">Hook</p><p class="text-gray-700 italic">${idea.hook}</p></div>
+          <div><p class="text-xs font-semibold text-gray-400 uppercase mb-1">Visual</p><p class="text-gray-600">${idea.visual}</p></div>
+          <div><p class="text-xs font-semibold text-gray-400 uppercase mb-1">Caption</p><p class="text-gray-600">${idea.caption}</p></div>
+        </div>
+        <button onclick="navigator.clipboard.writeText(\`${idea.hook}\\n\\n${idea.visual}\\n\\n${idea.caption}\`).then(()=>showToast('Copied!'))" class="mt-2 text-xs bg-gray-100 text-navy font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">Copy This Idea</button>
+      </div>
+    `).join('');
+}
+
+function daysUntilWorldCup() {
+  const target = new Date('2026-06-11T16:00:00-04:00');
+  const now = new Date();
+  return Math.max(0, Math.floor((target - now) / 86400000));
+}
+
+// ===================================================
+// INIT
+// ===================================================
+document.addEventListener('DOMContentLoaded', function() {
+  renderProducts();
+  updateCartUI();
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // Clear inline error styling as soon as the user edits a field
+  ['f-email','f-name','f-address','f-zip','f-city','f-card','f-expiry','f-cvv'].forEach(function(id){
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', function(){ el.style.borderColor=''; el.style.boxShadow=''; });
+  });
+
+  // Close modals on overlay click
+  document.getElementById('checkout-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeCheckout();
+  });
+  document.getElementById('admin-login-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeAdminLogin();
+  });
+  document.getElementById('admin-dashboard-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeAdminDashboard();
+  });
+
+  // Escape key closes modals
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeCart(); closeCheckout(); closeAdminLogin(); closeAdminDashboard();
+    }
+  });
+});
+</script>
+
+<!-- ====================================================
+     HOW TO UPGRADE TO PRODUCTION
+     (This section is below the site — visible in source/dev only)
+     ====================================================
+
+=================================================================
+HOW TO UPGRADE TO PRODUCTION
+=================================================================
+
+1. SUPABASE — Database & Auth
+─────────────────────────────
+a) Create project at supabase.com → New Project
+
+b) Products table schema (SQL editor):
+   CREATE TABLE products (
+     id          TEXT PRIMARY KEY,
+     name        TEXT NOT NULL,
+     price       NUMERIC(10,2) NOT NULL,
+     stock       INTEGER NOT NULL DEFAULT 0,
+     description TEXT,
+     image_url   TEXT,
+     sizes       TEXT[],
+     category    TEXT,
+     created_at  TIMESTAMPTZ DEFAULT NOW()
+   );
+
+   -- Enable Row Level Security
+   ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+   -- Public read
+   CREATE POLICY "public read" ON products FOR SELECT USING (true);
+   -- Authenticated write (admin only)
+   CREATE POLICY "admin write" ON products FOR ALL USING (auth.role() = 'authenticated');
+
+c) Replace JS PRODUCTS array with Supabase fetch:
+   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+   const supabase = createClient('YOUR_URL', 'YOUR_ANON_KEY')
+   const { data: products } = await supabase.from('products').select('*')
+
+d) Admin price/stock updates:
+   await supabase.from('products').update({ price: 35, stock: 20 }).eq('id', 'hs-tee-001')
+
+e) Optional realtime stock updates (shows when another tab buys):
+   supabase.channel('products').on('postgres_changes',
+     { event: 'UPDATE', schema: 'public', table: 'products' },
+     (payload) => updateProductUI(payload.new)
+   ).subscribe()
+
+f) Admin auth: Use supabase.auth.signInWithPassword({ email, password })
+   Replace the demo password check with real Supabase session management.
+
+
+2. PRINTFUL — Auto-Fulfillment
+────────────────────────────────
+a) Create account at printful.com → connect store via API
+b) Get API key from Dashboard → Store → API
+
+c) MVP path (start here): Fulfill manually in Printful dashboard first.
+   Just forward order details by email until you verify unit economics.
+
+d) Auto-fulfillment flow (production):
+   checkout complete
+     → POST https://api.printful.com/orders
+     → body: { recipient: {name,address,...}, items: [{sync_variant_id, quantity}] }
+     → Printful prints, ships, sends tracking to customer
+
+e) Webhooks from Printful:
+   - package_shipped → update order status, email tracking to customer
+   - order_failed    → alert you to re-fulfill manually
+   Set webhook URL in Printful dashboard → Store → Webhooks
+
+f) Sync products: Each product needs a Printful "sync product" with variant IDs.
+   Map your PRODUCTS[].id to Printful sync_variant_ids.
+
+
+3. PAYMENTS — Production-Ready Checkout
+─────────────────────────────────────────
+a) Stripe (recommended for cards + Apple Pay + Google Pay):
+   - npm install @stripe/stripe-js
+   - Initialize: loadStripe('pk_live_...')
+   - Replace card form with <stripe-element> for PCI compliance
+   - Apple Pay / Google Pay: use PaymentRequestButton element
+     → Stripe handles device detection automatically
+   - Server: POST /create-payment-intent → return client_secret
+   - Client: stripe.confirmPayment({ clientSecret, confirmParams })
+
+b) PayPal Buttons (add alongside Stripe):
+   - Load PayPal JS SDK: ?client-id=YOUR_ID&currency=USD
+   - Render: paypal.Buttons({ createOrder, onApprove }).render('#paypal-btn')
+   - Handles PayPal balance + Venmo (via PayPal SDK) automatically
+
+c) Cash App Pay:
+   - Routes through Stripe (Cash App is a Stripe payment method in the US)
+   - Enable in Stripe Dashboard → Payment methods → Cash App Pay
+
+d) One-page checkout → production flow:
+   1. User fills form or taps wallet
+   2. Client calls your server: POST /checkout { items, email }
+   3. Server creates Stripe PaymentIntent, returns client_secret
+   4. Client confirms payment with Stripe.js
+   5. Server webhook (payment_intent.succeeded) → create Printful order
+   6. Client shows confirmation page
+
+e) No server? Use Stripe Payment Links or Shopify Buy Button as a bridge
+   while you build the full backend — zero code, real payments in minutes.
+
+=================================================================
+END PRODUCTION NOTES
+=================================================================
+-->
+
+</body>
+</html>
