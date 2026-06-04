@@ -904,7 +904,6 @@
     <div class="flex gap-2 px-6 py-3 border-b border-gray-100">
       <button class="admin-tab-btn active" onclick="switchAdminTab('products', this)">📦 Products</button>
       <button class="admin-tab-btn" onclick="switchAdminTab('ads', this)">📣 Ad Generator</button>
-      <button class="admin-tab-btn" onclick="switchAdminTab('design', this)">🎨 Design Studio</button>
     </div>
 
     <div class="flex-1 overflow-y-auto p-6">
@@ -955,32 +954,6 @@
         <div id="ad-ideas-output" class="space-y-4" style="display:none;"></div>
       </div>
 
-      <!-- DESIGN STUDIO TAB (Grok AI → Printful) -->
-      <div id="admin-tab-design" style="display:none;">
-        <h3 class="font-bold text-lg text-navy mb-1">🎨 Design Studio — Grok AI → Printful</h3>
-        <p class="text-sm text-gray-500 mb-5">Describe a fan design. Grok generates original artwork, then it's pushed to Printful as a new product. Keep designs original — no official logos, emblems, or marks.</p>
-
-        <div class="mb-4">
-          <label class="form-label">Describe your design</label>
-          <textarea id="design-prompt" class="form-input" rows="3" placeholder="e.g. Bold vintage-style badge: 'HOME SOIL 2026' with a soccer ball bursting through stars and stripes, distressed red/white/navy, retro athletic feel"></textarea>
-        </div>
-        <div class="mb-4">
-          <label class="form-label">Apply to garment</label>
-          <select id="design-garment" class="form-input">
-            <option value="Premium Tee">Premium Tee</option>
-            <option value="Fleece Hoodie">Fleece Hoodie</option>
-            <option value="Snapback Hat">Snapback Hat</option>
-            <option value="Dad Hat">Dad Hat</option>
-          </select>
-        </div>
-        <button onclick="generateDesign()" class="btn-primary mb-5">✨ Generate Design with Grok AI</button>
-
-        <div id="design-output" style="display:none;"></div>
-
-        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-800">
-          <strong>Pipeline:</strong> Grok image gen → upscale to 300 DPI + remove background → upload to Printful → mockups &amp; variant IDs returned → product added to store. Requires your backend + API keys (see DEPLOY.md). Until configured, this runs in demo preview mode.
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -1690,7 +1663,6 @@ function switchAdminTab(tab, btn) {
   if (btn) btn.classList.add('active');
   document.getElementById('admin-tab-products').style.display = tab === 'products' ? 'block' : 'none';
   document.getElementById('admin-tab-ads').style.display = tab === 'ads' ? 'block' : 'none';
-  document.getElementById('admin-tab-design').style.display = tab === 'design' ? 'block' : 'none';
 }
 
 // ===================================================
@@ -1962,72 +1934,6 @@ function openLegal(key) {
 function closeLegal() {
   document.getElementById('legal-modal').classList.remove('open');
   document.body.style.overflow = '';
-}
-
-// ===================================================
-// DESIGN STUDIO (Grok AI → Printful) — owner only
-// In DEMO mode this previews the workflow. In LIVE mode it calls your
-// backend /api/generate-design which runs Grok image gen + Printful upload.
-// ===================================================
-async function generateDesign() {
-  const prompt = document.getElementById('design-prompt').value.trim();
-  const garment = document.getElementById('design-garment').value;
-  const out = document.getElementById('design-output');
-  if (!prompt) { showToast('Describe a design first'); return; }
-
-  out.style.display = 'block';
-  out.innerHTML = `<div class="text-center py-8 text-gray-500">⚙️ Generating design with Grok AI…</div>`;
-
-  if (STORE_CONFIG.backendUrl) {
-    // LIVE: call your real backend
-    try {
-      const res = await fetch(STORE_CONFIG.backendUrl + '/api/generate-design', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, garment })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Generation failed');
-      out.innerHTML = `
-        <div class="bg-white border border-gray-200 rounded-xl p-4">
-          <img src="${data.imageUrl}" alt="Generated design" class="w-full rounded-lg mb-3" />
-          <p class="text-sm text-gray-600 mb-3">Design generated for <strong>${garment}</strong>. Review, then push to Printful.</p>
-          <button onclick="pushDesignToPrintful('${data.designId}')" class="btn-primary">Create Product in Printful →</button>
-        </div>`;
-    } catch (e) {
-      out.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">Error: ${e.message}</div>`;
-    }
-    return;
-  }
-
-  // DEMO: show the workflow with a placeholder so you can see the flow
-  setTimeout(function() {
-    out.innerHTML = `
-      <div class="bg-white border border-gray-200 rounded-xl p-4">
-        <div class="aspect-square max-w-xs mx-auto rounded-lg bg-gradient-to-br from-blue-900 via-red-700 to-blue-900 flex items-center justify-center text-white text-center p-6 mb-3">
-          <div>
-            <div class="text-4xl mb-2">🎨</div>
-            <p class="text-sm font-semibold">[ DEMO PREVIEW ]</p>
-            <p class="text-xs opacity-80 mt-1">"${prompt}"</p>
-          </div>
-        </div>
-        <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
-          ⚠️ Demo mode — this is a placeholder. Add your backend + Grok/Printful keys
-          (see DEPLOY.md) to generate real artwork and auto-create the product on a ${garment}.
-        </p>
-        <p class="text-xs text-gray-500"><strong>Live pipeline:</strong> Grok generates art → upscaled to 300 DPI &amp; background removed → uploaded to Printful → mockups + variant IDs returned → product added to your store.</p>
-      </div>`;
-  }, 900);
-}
-
-function pushDesignToPrintful(designId) {
-  // Wired for LIVE mode; backend handles the Printful product creation.
-  showToast('Sending design to Printful…');
-  fetch(STORE_CONFIG.backendUrl + '/api/create-printful-product', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ designId })
-  }).then(r => r.json()).then(d => {
-    showToast(d.error ? ('Error: ' + d.error) : 'Product created in Printful!');
-  }).catch(e => showToast('Error: ' + e.message));
 }
 
 // ===================================================
