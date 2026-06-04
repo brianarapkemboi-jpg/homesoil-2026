@@ -3,8 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home Soil 2026 — Official Fan-Inspired USA World Cup Gear</title>
+  <title>Home Soil 2026 — Fan-Inspired USA World Cup Gear</title>
   <meta name="description" content="Fan-inspired original gear for the USA 2026 World Cup. Premium tees, hoodies, hats, and more. Printed in USA. Ships 3-5 days." />
+
+  <!-- ===== SEO + SOCIAL SHARE (Open Graph / Twitter) =====
+       These control how your ad links and shares look on Facebook, Instagram,
+       TikTok, iMessage, etc. Update og:url + og:image to your live domain. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Home Soil 2026" />
+  <meta property="og:title" content="Home Soil 2026 — Fan-Inspired USA World Cup Gear" />
+  <meta property="og:description" content="The World Cup comes home. Premium fan-inspired gear, printed in the USA, ships in 3–5 days." />
+  <meta property="og:url" content="https://brianarapkemboi-jpg.github.io/homesoil-2026/" />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&q=80" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Home Soil 2026 — Fan-Inspired USA World Cup Gear" />
+  <meta name="twitter:description" content="The World Cup comes home. Premium fan-inspired gear, printed in the USA." />
+  <meta name="twitter:image" content="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&q=80" />
+  <meta name="theme-color" content="#002868" />
+  <link rel="canonical" href="https://brianarapkemboi-jpg.github.io/homesoil-2026/" />
+
+  <!-- ===== ANALYTICS & AD PIXELS =====
+       Required so your generated ads can track sales. Paste your real IDs into
+       the STORE_CONFIG.pixels object below in the main <script>, then uncomment.
+       Meta Pixel, TikTok Pixel, and Google Analytics 4 loaders are pre-wired in
+       initPixels() — they stay dormant until you add IDs (no errors, no load). -->
+
 
   <!-- Precompiled Tailwind CSS from CDN chosen over Play CDN to avoid ~25KB runtime compiler and eliminate INP from JIT class scanning -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -623,10 +646,11 @@
       <div>
         <h4 class="font-bold text-sm uppercase tracking-widest mb-4" style="color:rgba(255,255,255,0.5);">Support</h4>
         <ul class="space-y-2 text-sm" style="color:rgba(255,255,255,0.7);">
-          <li><a href="#" class="hover:text-white transition-colors">Shipping & Returns</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Track Your Order</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Contact Us</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
+          <li><button onclick="openLegal('shipping')" class="hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;padding:0;">Shipping Policy</button></li>
+          <li><button onclick="openLegal('returns')" class="hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;padding:0;">Refund &amp; Returns</button></li>
+          <li><a href="mailto:support@homesoil2026.com" class="hover:text-white transition-colors">Contact Us</a></li>
+          <li><button onclick="openLegal('privacy')" class="hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;padding:0;">Privacy Policy</button></li>
+          <li><button onclick="openLegal('terms')" class="hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;padding:0;">Terms of Service</button></li>
         </ul>
       </div>
     </div>
@@ -880,6 +904,7 @@
     <div class="flex gap-2 px-6 py-3 border-b border-gray-100">
       <button class="admin-tab-btn active" onclick="switchAdminTab('products', this)">📦 Products</button>
       <button class="admin-tab-btn" onclick="switchAdminTab('ads', this)">📣 Ad Generator</button>
+      <button class="admin-tab-btn" onclick="switchAdminTab('design', this)">🎨 Design Studio</button>
     </div>
 
     <div class="flex-1 overflow-y-auto p-6">
@@ -929,9 +954,56 @@
 
         <div id="ad-ideas-output" class="space-y-4" style="display:none;"></div>
       </div>
+
+      <!-- DESIGN STUDIO TAB (Grok AI → Printful) -->
+      <div id="admin-tab-design" style="display:none;">
+        <h3 class="font-bold text-lg text-navy mb-1">🎨 Design Studio — Grok AI → Printful</h3>
+        <p class="text-sm text-gray-500 mb-5">Describe a fan design. Grok generates original artwork, then it's pushed to Printful as a new product. Keep designs original — no official logos, emblems, or marks.</p>
+
+        <div class="mb-4">
+          <label class="form-label">Describe your design</label>
+          <textarea id="design-prompt" class="form-input" rows="3" placeholder="e.g. Bold vintage-style badge: 'HOME SOIL 2026' with a soccer ball bursting through stars and stripes, distressed red/white/navy, retro athletic feel"></textarea>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Apply to garment</label>
+          <select id="design-garment" class="form-input">
+            <option value="Premium Tee">Premium Tee</option>
+            <option value="Fleece Hoodie">Fleece Hoodie</option>
+            <option value="Snapback Hat">Snapback Hat</option>
+            <option value="Dad Hat">Dad Hat</option>
+          </select>
+        </div>
+        <button onclick="generateDesign()" class="btn-primary mb-5">✨ Generate Design with Grok AI</button>
+
+        <div id="design-output" style="display:none;"></div>
+
+        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-800">
+          <strong>Pipeline:</strong> Grok image gen → upscale to 300 DPI + remove background → upload to Printful → mockups &amp; variant IDs returned → product added to store. Requires your backend + API keys (see DEPLOY.md). Until configured, this runs in demo preview mode.
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- ====================================================
+     LEGAL / POLICY MODAL (Privacy, Returns, Shipping, Terms)
+     ==================================================== -->
+<div class="modal-overlay" id="legal-modal" onclick="if(event.target===this)closeLegal()">
+  <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col" style="max-height:88vh;">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+      <h2 class="font-display font-black text-navy text-2xl" id="legal-title">Policy</h2>
+      <button onclick="closeLegal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500">✕</button>
+    </div>
+    <div class="overflow-y-auto p-6 legal-body" id="legal-body"></div>
+    <div class="px-6 py-3 border-t border-gray-100 text-xs text-gray-400 flex-shrink-0">
+      Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer. · support@homesoil2026.com
+    </div>
+  </div>
+</div>
+<style>
+  .legal-body h4 { font-weight:700; color:var(--navy); margin:16px 0 4px; font-size:.95rem; }
+  .legal-body p { color:#4b5563; font-size:.875rem; line-height:1.6; margin-bottom:8px; }
+</style>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -940,6 +1012,30 @@
      JAVASCRIPT
      ==================================================== -->
 <script>
+// ===================================================
+// STORE CONFIG — the ONE place that flips demo → production
+// ---------------------------------------------------
+// Leave backendUrl empty ('') to run as a safe DEMO (simulated checkout).
+// Set backendUrl to your deployed API (e.g. Vercel) + add your Stripe
+// publishable key to turn on REAL payments. See DEPLOY.md.
+// ===================================================
+const STORE_CONFIG = {
+  // Your deployed serverless API base. Empty = demo/simulation mode.
+  backendUrl: '',                 // e.g. 'https://homesoil-2026.vercel.app'
+  stripePublishableKey: '',       // e.g. 'pk_live_...'  (publishable key is safe in front-end)
+  freeShippingThreshold: 75,
+  flatShipping: 6.99,
+  taxRate: 0.08,
+  // Ad pixels — paste your real IDs to activate tracking (kept dormant until set)
+  pixels: {
+    metaPixelId: '',              // Facebook/Instagram ads
+    tiktokPixelId: '',            // TikTok ads
+    ga4Id: ''                     // Google Analytics 4 (e.g. 'G-XXXXXXX')
+  }
+};
+// True only when a backend + Stripe key are configured.
+const LIVE_MODE = !!(STORE_CONFIG.backendUrl && STORE_CONFIG.stripePublishableKey);
+
 // ===================================================
 // PRODUCT DATA — edit prices, stock, descriptions here
 // All artwork is fan-inspired original work.
@@ -1088,6 +1184,7 @@ function addToCart(productId, size, qty = 1) {
   }
   saveCart();
   showToast(`${product.name} added to cart`);
+  trackEvent('AddToCart', { content_name: product.name, value: product.price, currency: 'USD' });
 }
 
 function removeFromCart(key) {
@@ -1257,6 +1354,7 @@ function openCheckout() {
   updateCheckoutSummary();
   document.getElementById('checkout-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  trackEvent('InitiateCheckout', { value: cartTotal(), currency: 'USD', num_items: cartCount() });
 }
 
 function closeCheckout() {
@@ -1341,22 +1439,91 @@ function handleCheckoutSubmit(e) {
   processPayment(email, 'Card');
 }
 
-function processPayment(email, method) {
+// Stripe.js handle (loaded only in LIVE_MODE)
+let stripeJs = null;
+function loadStripeIfLive() {
+  if (!LIVE_MODE) return;
+  const s = document.createElement('script');
+  s.src = 'https://js.stripe.com/v3/';
+  s.onload = function(){ try { stripeJs = Stripe(STORE_CONFIG.stripePublishableKey); } catch(e){} };
+  document.head.appendChild(s);
+}
+
+function setPayBtn(text, disabled) {
+  const btn = document.getElementById('pay-btn');
+  if (!btn) return;
+  btn.disabled = disabled; btn.style.opacity = disabled ? '0.7' : '';
+  if (text !== null) btn.innerHTML = text;
+}
+
+async function processPayment(email, method) {
   orderProcessing = true;
   const btn = document.getElementById('pay-btn');
   const original = btn ? btn.innerHTML : '';
-  if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.innerHTML = 'Processing payment…'; }
+  setPayBtn('Processing payment…', true);
 
-  // Simulate a short, realistic processing delay (no real charge occurs)
+  // ---- LIVE MODE: real charge via your backend + Stripe ----
+  if (LIVE_MODE) {
+    try {
+      const order = buildOrderPayload(email, method);
+      const res = await fetch(STORE_CONFIG.backendUrl + '/api/create-payment-intent', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Payment setup failed');
+
+      // For express wallets the backend may redirect; for cards we confirm here.
+      if (data.clientSecret && stripeJs && method === 'Card') {
+        const result = await stripeJs.confirmCardPayment(data.clientSecret, {
+          payment_method: { card: { /* In production, use Stripe Elements for PCI-safe card input */ } }
+        });
+        if (result.error) throw new Error(result.error.message);
+      }
+      completeOrder(email, method, data.orderId);
+    } catch (e) {
+      showToast('Payment error: ' + e.message);
+      setPayBtn(original, false);
+      orderProcessing = false;
+      return;
+    }
+    setPayBtn(original, false);
+    orderProcessing = false;
+    return;
+  }
+
+  // ---- DEMO MODE: simulated processing, no real charge ----
   setTimeout(function() {
     completeOrder(email, method);
     orderProcessing = false;
-    if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.innerHTML = original; }
+    setPayBtn(original, false);
   }, 900);
 }
 
-function completeOrder(email, method) {
-  // Simulate successful order placement
+// Build the order object sent to the backend (also used for Printful fulfillment)
+function buildOrderPayload(email, method) {
+  const sub = cartTotal();
+  const ship = sub >= STORE_CONFIG.freeShippingThreshold ? 0 : STORE_CONFIG.flatShipping;
+  const tax = sub * STORE_CONFIG.taxRate;
+  return {
+    email: email,
+    paymentMethod: method,
+    customer: {
+      name: (document.getElementById('f-name').value || '').trim(),
+      address: (document.getElementById('f-address').value || '').trim(),
+      city: (document.getElementById('f-city').value || '').trim(),
+      zip: (document.getElementById('f-zip').value || '').trim()
+    },
+    items: cart.map(i => ({ id: i.productId, name: i.name, size: i.size, qty: i.qty, price: i.price })),
+    amounts: { subtotal: +sub.toFixed(2), shipping: +ship.toFixed(2), tax: +tax.toFixed(2), total: +(sub+ship+tax).toFixed(2) }
+  };
+}
+
+function completeOrder(email, method, orderId) {
+  const total = cartTotal();
+  // Fire purchase conversion to ad pixels (so your ads can optimize)
+  trackEvent('Purchase', { value: +(total*1.08).toFixed(2), currency: 'USD', num_items: cartCount() });
+
   document.getElementById('checkout-flow').style.display = 'none';
   document.getElementById('checkout-confirmation').style.display = 'flex';
   document.getElementById('confirm-email').textContent = email;
@@ -1523,6 +1690,7 @@ function switchAdminTab(tab, btn) {
   if (btn) btn.classList.add('active');
   document.getElementById('admin-tab-products').style.display = tab === 'products' ? 'block' : 'none';
   document.getElementById('admin-tab-ads').style.display = tab === 'ads' ? 'block' : 'none';
+  document.getElementById('admin-tab-design').style.display = tab === 'design' ? 'block' : 'none';
 }
 
 // ===================================================
@@ -1675,9 +1843,199 @@ function daysUntilWorldCup() {
 }
 
 // ===================================================
+// ANALYTICS & AD PIXELS
+// Loads Meta Pixel, TikTok Pixel, and GA4 ONLY when IDs are configured.
+// No IDs = nothing loads (zero errors, zero performance cost).
+// ===================================================
+function initPixels() {
+  const px = STORE_CONFIG.pixels || {};
+
+  // Meta (Facebook/Instagram) Pixel
+  if (px.metaPixelId) {
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+      n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+      (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', px.metaPixelId); fbq('track', 'PageView');
+  }
+
+  // TikTok Pixel
+  if (px.tiktokPixelId) {
+    !function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];
+      ttq.methods=['page','track','identify','instances','debug','on','off','once','ready','alias','group','enableCookie','disableCookie'];
+      ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};
+      for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);
+      ttq.load=function(e){var n='https://analytics.tiktok.com/i18n/pixel/events.js';
+      ttq._i=ttq._i||{};ttq._i[e]=[];ttq._i[e]._u=n;ttq._t=ttq._t||{};ttq._t[e]=+new Date;
+      var o=d.createElement('script');o.async=!0;o.src=n+'?sdkid='+e;
+      var a=d.getElementsByTagName('script')[0];a.parentNode.insertBefore(o,a)};
+      ttq.load(px.tiktokPixelId);ttq.page();}(window,document,'ttq');
+  }
+
+  // Google Analytics 4
+  if (px.ga4Id) {
+    var s=document.createElement('script');s.async=true;
+    s.src='https://www.googletagmanager.com/gtag/js?id='+px.ga4Id;
+    document.head.appendChild(s);
+    window.dataLayer=window.dataLayer||[];
+    window.gtag=function(){dataLayer.push(arguments)};
+    gtag('js',new Date());gtag('config',px.ga4Id);
+  }
+}
+
+// Unified event tracker — fires to whichever pixels are active.
+function trackEvent(name, data) {
+  data = data || {};
+  try {
+    if (window.fbq) fbq('track', name, data);
+    if (window.ttq) ttq.track(name, data);
+    if (window.gtag) gtag('event', name, data);
+  } catch (e) { /* never let analytics break the store */ }
+}
+
+// ===================================================
+// LEGAL / POLICY PAGES (required before running ads)
+// ===================================================
+const LEGAL_CONTENT = {
+  privacy: {
+    title: 'Privacy Policy',
+    body: `<p><strong>Last updated: 2026.</strong></p>
+      <p>Home Soil 2026 ("we", "us") respects your privacy. This policy explains what we collect and why.</p>
+      <h4>What we collect</h4>
+      <p>When you place an order we collect your name, email, shipping address, and payment details. Payment card data is processed securely by our payment provider (Stripe/PayPal) and is never stored on our servers.</p>
+      <h4>How we use it</h4>
+      <p>To process and ship your order, send order/shipping confirmations, provide support, and — if you opt in — send occasional marketing. We may use analytics and advertising pixels (Meta, TikTok, Google) to measure and improve our ads.</p>
+      <h4>Sharing</h4>
+      <p>We share order data only with the vendors needed to fulfill your purchase (payment processor, print/fulfillment partner, shipping carriers). We never sell your personal information.</p>
+      <h4>Your rights</h4>
+      <p>You may request access to or deletion of your data at any time by contacting <strong>support@homesoil2026.com</strong>.</p>
+      <h4>Cookies</h4>
+      <p>We use cookies for cart functionality and advertising measurement. You can disable cookies in your browser.</p>`
+  },
+  returns: {
+    title: 'Refund & Returns Policy',
+    body: `<h4>30-Day Happiness Guarantee</h4>
+      <p>If you're not completely satisfied, contact us within <strong>30 days</strong> of delivery for a free replacement or a full refund.</p>
+      <h4>Damaged or misprinted items</h4>
+      <p>Email a photo to <strong>support@homesoil2026.com</strong> and we'll reprint and reship at no cost — no need to return the item.</p>
+      <h4>How refunds work</h4>
+      <p>Approved refunds are issued to your original payment method within 5–10 business days.</p>
+      <h4>Made-to-order note</h4>
+      <p>Because every item is printed on demand just for you, we can't accept returns for "changed my mind" on the wrong size once printed — but our guarantee still covers defects and our team will always work with you.</p>`
+  },
+  shipping: {
+    title: 'Shipping Policy',
+    body: `<h4>Processing & printing</h4>
+      <p>Every order is printed on demand in the USA. Production takes 2–5 business days, then ships.</p>
+      <h4>Delivery time</h4>
+      <p>Standard shipping arrives in <strong>3–5 business days</strong> after it ships (US). Expedited options are available at checkout.</p>
+      <h4>Shipping cost</h4>
+      <p>Flat $6.99 standard shipping. <strong>FREE on orders over $75.</strong></p>
+      <h4>Tracking</h4>
+      <p>You'll receive a tracking link by email as soon as your order ships.</p>
+      <h4>International</h4>
+      <p>We ship to select countries; duties/taxes may apply and are the customer's responsibility.</p>`
+  },
+  terms: {
+    title: 'Terms of Service',
+    body: `<p>By using this site and placing an order you agree to these terms.</p>
+      <h4>Original artwork</h4>
+      <p>All designs are <strong>fan-inspired original artwork</strong>. Home Soil 2026 is <strong>not affiliated with, endorsed by, or sponsored by FIFA, U.S. Soccer, or any official organizing body</strong>. We do not use any official marks, logos, emblems, or trademarks.</p>
+      <h4>Orders & pricing</h4>
+      <p>We reserve the right to refuse or cancel any order and to correct pricing errors. All prices are in USD.</p>
+      <h4>Limitation of liability</h4>
+      <p>Products are provided "as is" beyond our stated guarantee. Our liability is limited to the amount you paid for the product.</p>
+      <h4>Contact</h4>
+      <p>Questions? <strong>support@homesoil2026.com</strong></p>`
+  }
+};
+
+function openLegal(key) {
+  const c = LEGAL_CONTENT[key];
+  if (!c) return;
+  document.getElementById('legal-title').textContent = c.title;
+  document.getElementById('legal-body').innerHTML = c.body;
+  document.getElementById('legal-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLegal() {
+  document.getElementById('legal-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ===================================================
+// DESIGN STUDIO (Grok AI → Printful) — owner only
+// In DEMO mode this previews the workflow. In LIVE mode it calls your
+// backend /api/generate-design which runs Grok image gen + Printful upload.
+// ===================================================
+async function generateDesign() {
+  const prompt = document.getElementById('design-prompt').value.trim();
+  const garment = document.getElementById('design-garment').value;
+  const out = document.getElementById('design-output');
+  if (!prompt) { showToast('Describe a design first'); return; }
+
+  out.style.display = 'block';
+  out.innerHTML = `<div class="text-center py-8 text-gray-500">⚙️ Generating design with Grok AI…</div>`;
+
+  if (STORE_CONFIG.backendUrl) {
+    // LIVE: call your real backend
+    try {
+      const res = await fetch(STORE_CONFIG.backendUrl + '/api/generate-design', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, garment })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Generation failed');
+      out.innerHTML = `
+        <div class="bg-white border border-gray-200 rounded-xl p-4">
+          <img src="${data.imageUrl}" alt="Generated design" class="w-full rounded-lg mb-3" />
+          <p class="text-sm text-gray-600 mb-3">Design generated for <strong>${garment}</strong>. Review, then push to Printful.</p>
+          <button onclick="pushDesignToPrintful('${data.designId}')" class="btn-primary">Create Product in Printful →</button>
+        </div>`;
+    } catch (e) {
+      out.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">Error: ${e.message}</div>`;
+    }
+    return;
+  }
+
+  // DEMO: show the workflow with a placeholder so you can see the flow
+  setTimeout(function() {
+    out.innerHTML = `
+      <div class="bg-white border border-gray-200 rounded-xl p-4">
+        <div class="aspect-square max-w-xs mx-auto rounded-lg bg-gradient-to-br from-blue-900 via-red-700 to-blue-900 flex items-center justify-center text-white text-center p-6 mb-3">
+          <div>
+            <div class="text-4xl mb-2">🎨</div>
+            <p class="text-sm font-semibold">[ DEMO PREVIEW ]</p>
+            <p class="text-xs opacity-80 mt-1">"${prompt}"</p>
+          </div>
+        </div>
+        <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
+          ⚠️ Demo mode — this is a placeholder. Add your backend + Grok/Printful keys
+          (see DEPLOY.md) to generate real artwork and auto-create the product on a ${garment}.
+        </p>
+        <p class="text-xs text-gray-500"><strong>Live pipeline:</strong> Grok generates art → upscaled to 300 DPI &amp; background removed → uploaded to Printful → mockups + variant IDs returned → product added to your store.</p>
+      </div>`;
+  }, 900);
+}
+
+function pushDesignToPrintful(designId) {
+  // Wired for LIVE mode; backend handles the Printful product creation.
+  showToast('Sending design to Printful…');
+  fetch(STORE_CONFIG.backendUrl + '/api/create-printful-product', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ designId })
+  }).then(r => r.json()).then(d => {
+    showToast(d.error ? ('Error: ' + d.error) : 'Product created in Printful!');
+  }).catch(e => showToast('Error: ' + e.message));
+}
+
+// ===================================================
 // INIT
 // ===================================================
 document.addEventListener('DOMContentLoaded', function() {
+  initPixels();          // load ad pixels if IDs configured
+  loadStripeIfLive();    // load Stripe.js if live payments configured
   renderProducts();
   updateCartUI();
   updateCountdown();
