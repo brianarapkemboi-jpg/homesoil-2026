@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS orders (
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 -- No public policies: orders are accessible only via the service role (backend). Customers never read orders directly.
 
--- ---------- DESIGNS (Grok AI Design Studio) ----------
+-- ---------- DESIGNS (optional: track artwork from your external design system) ----------
 CREATE TABLE IF NOT EXISTS designs (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   prompt      TEXT NOT NULL,
