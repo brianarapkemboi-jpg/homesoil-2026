@@ -22,8 +22,11 @@ export default async function handler(req, res) {
 
   try {
     const { email, items, customer, paymentMethod } = req.body || {};
-    if (!email || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Missing email or items' });
+    // email is optional at intent-creation time (Stripe's Payment Element mounts
+    // before the customer types it); the final email is captured at confirm +
+    // via the webhook. Items are required so we can price the order.
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Missing items' });
     }
 
     // --- Re-price from the database (authoritative) ---
@@ -47,7 +50,7 @@ export default async function handler(req, res) {
     // --- Record a pending order ---
     const { data: order, error: orderErr } = await supabase
       .from('orders').insert({
-        email,
+        email: email || 'pending@homesoil2026.com',
         customer,
         items,
         subtotal, shipping, tax, total,
@@ -60,7 +63,7 @@ export default async function handler(req, res) {
     const intent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: 'usd',
-      receipt_email: email,
+      ...(email ? { receipt_email: email } : {}),
       // Lets Stripe present cards, Apple Pay, Google Pay, Cash App automatically
       automatic_payment_methods: { enabled: true },
       metadata: { order_id: order.id, email }
