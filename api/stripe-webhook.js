@@ -115,5 +115,31 @@ export default async function handler(req, res) {
     }
   }
 
+  // Keep order records in sync when you issue a refund from the Stripe dashboard.
+  // (Enable the `charge.refunded` event on the webhook endpoint in Stripe.)
+  if (event.type === 'charge.refunded') {
+    const ch = event.data.object;
+    try {
+      // The order id lives on the PaymentIntent's metadata, not on the charge.
+      let orderId = ch.metadata?.order_id;
+      if (!orderId && ch.payment_intent) {
+        const piId = typeof ch.payment_intent === 'string' ? ch.payment_intent : ch.payment_intent.id;
+        const pi = await stripe.paymentIntents.retrieve(piId);
+        orderId = pi.metadata?.order_id;
+      }
+      if (orderId) {
+        const fullyRefunded = ch.amount_refunded >= ch.amount;
+        await supabase.from('orders')
+          .update({ status: fullyRefunded ? 'refunded' : 'partial_refund' })
+          .eq('id', orderId)
+          .neq('status', 'refunded');
+        // Stock is intentionally not auto-restored (print-on-demand); bump it in
+        // the admin if you want the unit back on sale.
+      }
+    } catch (err) {
+      console.error('Refund sync error:', err.message);
+    }
+  }
+
   return res.status(200).json({ received: true });
 }
