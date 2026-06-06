@@ -62,6 +62,9 @@ ALTER TABLE designs ENABLE ROW LEVEL SECURITY;
 -- concurrent orders for the last unit can't both succeed. Returns the remaining
 -- stock, or -1 when there wasn't enough (the webhook flags those orders for
 -- review instead of letting stock go negative).
+-- DROP first: this function's return type changed (void -> integer), and
+-- Postgres won't let CREATE OR REPLACE change a return type.
+DROP FUNCTION IF EXISTS decrement_stock(TEXT, INTEGER);
 CREATE OR REPLACE FUNCTION decrement_stock(p_id TEXT, p_qty INTEGER)
 RETURNS INTEGER LANGUAGE plpgsql AS $$
 DECLARE remaining INTEGER;
