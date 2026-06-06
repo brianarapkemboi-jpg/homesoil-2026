@@ -36,11 +36,17 @@ export default async function handler(req, res) {
     if (dbErr) throw new Error('Could not load products');
 
     let subtotal = 0;
+    const orderItems = [];
     for (const item of items) {
       const p = dbProducts.find(d => d.id === item.id);
       if (!p) return res.status(400).json({ error: `Unknown product: ${item.id}` });
-      if (p.stock < item.qty) return res.status(409).json({ error: `Out of stock: ${p.name}` });
-      subtotal += p.price * item.qty;
+      const qty = parseInt(item.qty, 10);
+      if (!Number.isInteger(qty) || qty < 1) return res.status(400).json({ error: `Invalid quantity for ${p.name}` });
+      if (p.stock < qty) return res.status(409).json({ error: `Out of stock: ${p.name}` });
+      subtotal += p.price * qty;
+      // Persist authoritative name/price from the DB (never the browser's
+      // claimed price); keep size + qty from the request.
+      orderItems.push({ id: p.id, name: p.name, price: p.price, size: item.size, qty });
     }
     const shipping = subtotal >= FREE_SHIP_THRESHOLD ? 0 : FLAT_SHIPPING;
     const tax = subtotal * TAX_RATE;
@@ -52,7 +58,7 @@ export default async function handler(req, res) {
       .from('orders').insert({
         email: email || 'pending@homesoil2026.com',
         customer,
-        items,
+        items: orderItems,
         subtotal, shipping, tax, total,
         status: 'pending',
         payment_method: paymentMethod || 'card'
