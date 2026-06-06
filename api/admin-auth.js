@@ -7,6 +7,7 @@
 // (choose any strong password; it never appears in the public code).
 // ============================================================
 import crypto from 'crypto';
+import { clientIp, checkLock, recordFailure, recordSuccess } from './_lib/throttle.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -16,6 +17,13 @@ export default async function handler(req, res) {
   if (!expected) {
     // Fail closed: no password configured = no access.
     return res.status(503).json({ ok: false, error: 'Admin access not configured yet. Set ADMIN_PASSWORD in Vercel.' });
+  }
+
+  // Throttle brute-force attempts per IP before doing any work.
+  const ip = clientIp(req);
+  const lock = await checkLock(ip);
+  if (lock.locked) {
+    return res.status(429).json({ ok: false, error: `Too many attempts. Try again in ${Math.ceil(lock.retryAfter / 60)} min.` });
   }
 
   const { password } = req.body || {};
@@ -28,6 +36,10 @@ export default async function handler(req, res) {
   const b = Buffer.from(expected);
   const match = a.length === b.length && crypto.timingSafeEqual(a, b);
 
-  if (match) return res.status(200).json({ ok: true });
+  if (match) {
+    await recordSuccess(ip);
+    return res.status(200).json({ ok: true });
+  }
+  await recordFailure(ip);
   return res.status(401).json({ ok: false, error: 'Incorrect password' });
 }

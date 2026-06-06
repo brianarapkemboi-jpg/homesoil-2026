@@ -2,14 +2,15 @@
 // POST /api/stripe-webhook
 // Stripe calls this when a payment succeeds. This is the SOURCE OF TRUTH for
 // "the customer actually paid" — never mark an order paid from the browser.
-// On success: mark order paid, decrement stock, and send it to Printful.
+// On success: mark the order paid, capture the customer email + receipt, and
+// decrement stock. Fulfillment is done by hand in the Printful dashboard, so
+// the order is left at status 'paid' for the owner to process.
 //
 // Set the webhook in Stripe → Developers → Webhooks → add endpoint:
 //   https://YOUR-APP.vercel.app/api/stripe-webhook   event: payment_intent.succeeded
 // ============================================================
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { createPrintfulOrder } from './_lib/printful.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -68,7 +69,7 @@ export default async function handler(req, res) {
       // pending, backfilling the real customer email in the same write. Stripe
       // retries on any non-2xx and can deliver duplicate events; gating on
       // `.eq('status', 'pending')` means only the first delivery matches a row,
-      // so stock is never double-decremented and Printful never gets a dup order.
+      // so stock is never double-decremented on a retry.
       const customerEmail = await resolveCustomerEmail(pi);
       const { data: claimed } = await supabase.from('orders').update({
         status: 'paid',
@@ -90,33 +91,24 @@ export default async function handler(req, res) {
           }
         }
 
-        // Decrement stock for each item
+        // Decrement stock atomically. decrement_stock only applies when there's
+        // enough on hand and returns the remaining count, or -1 if it couldn't
+        // (a concurrent oversell). The customer has already paid, so we never
+        // block — instead we flag the order for the owner to review (refund or
+        // restock) rather than silently shipping stock that isn't there.
+        let oversold = false;
         for (const item of order.items) {
-          await supabase.rpc('decrement_stock', { p_id: item.id, p_qty: item.qty });
+          const { data: remaining } = await supabase.rpc('decrement_stock', { p_id: item.id, p_qty: item.qty });
+          if (remaining === -1) oversold = true;
+        }
+        if (oversold) {
+          await supabase.from('orders').update({ status: 'oversold_review' }).eq('id', orderId);
         }
 
-        // Order line items only carry storefront fields; the Printful
-        // sync-variant mapping lives on the products table. Look it up so
-        // fulfillment gets a real variant id instead of undefined (which makes
-        // every Printful order fail and fall through to manual fulfillment).
-        // NOTE: the schema stores one printful_variant_id per product, not per
-        // size — drafts (confirm:false) let you correct the size on review.
-        const { data: prods } = await supabase
-          .from('products').select('id, printful_variant_id')
-          .in('id', order.items.map(i => i.id));
-        const itemsForPrintful = order.items.map(i => ({
-          ...i,
-          printful_variant_id: prods?.find(p => p.id === i.id)?.printful_variant_id
-        }));
-
-        // Hand off to Printful for fulfillment (MVP: comment out to fulfill manually)
-        try {
-          const pf = await createPrintfulOrder({ ...order, items: itemsForPrintful });
-          await supabase.from('orders').update({ printful_order_id: pf.id, status: 'fulfilling' }).eq('id', orderId);
-        } catch (pfErr) {
-          console.error('Printful order failed (will fulfill manually):', pfErr.message);
-          await supabase.from('orders').update({ status: 'needs_manual_fulfillment' }).eq('id', orderId);
-        }
+        // Fulfillment is handled by hand in the Printful dashboard, so we stop
+        // here with the order at 'paid' (or 'oversold_review'). The order row
+        // carries everything needed to place it manually: line items with sizes,
+        // the customer's shipping details, and their email.
       }
     } catch (err) {
       console.error('Order finalize error:', err.message);

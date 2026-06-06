@@ -11,6 +11,7 @@
 // ============================================================
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { clientIp, checkLock, recordFailure, recordSuccess } from './_lib/throttle.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -26,9 +27,29 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
   const { password, products, deleteId } = req.body || {};
-  if (!passwordOk(password)) return res.status(401).json({ ok: false, error: 'Not authorized' });
+
+  // Throttle brute-force attempts per IP.
+  const ip = clientIp(req);
+  const lock = await checkLock(ip);
+  if (lock.locked) {
+    return res.status(429).json({ ok: false, error: `Too many attempts. Try again in ${Math.ceil(lock.retryAfter / 60)} min.` });
+  }
+  if (!passwordOk(password)) {
+    await recordFailure(ip);
+    return res.status(401).json({ ok: false, error: 'Not authorized' });
+  }
+  await recordSuccess(ip);
 
   try {
+    // --- Read the full catalog (admin only; includes internal columns like
+    //     printful_variants that the public /api/products endpoint hides) ---
+    if (!products && !deleteId) {
+      const { data, error } = await supabase
+        .from('products').select('*').order('created_at', { ascending: true });
+      if (error) throw error;
+      return res.status(200).json({ ok: true, products: data });
+    }
+
     // --- Delete one product ---
     if (deleteId) {
       const { error } = await supabase.from('products').delete().eq('id', deleteId);
@@ -49,7 +70,11 @@ export default async function handler(req, res) {
       description: p.description ? String(p.description) : null,
       image_url: p.image_url ? String(p.image_url) : null,
       sizes: Array.isArray(p.sizes) ? p.sizes : [],
-      category: p.category ? String(p.category) : null
+      category: p.category ? String(p.category) : null,
+      // Per-size Printful sync-variant map, e.g. {"S":4567,"M":4568}. Used for
+      // manual fulfillment; only kept when it's a plain object.
+      printful_variants: (p.printful_variants && typeof p.printful_variants === 'object' && !Array.isArray(p.printful_variants))
+        ? p.printful_variants : {}
     }));
 
     const { error } = await supabase.from('products').upsert(clean, { onConflict: 'id' });

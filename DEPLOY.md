@@ -33,12 +33,14 @@ The code is written. These steps need your logins/keys and a bank account:
 3. Apple Pay / Google Pay / Cash App: Settings → Payment methods → enable them (Stripe handles the wallets automatically via `automatic_payment_methods`).
 4. **Money flow:** customer pays → Stripe → auto-payout to your bank (daily/weekly). Fee ≈ 2.9% + $0.30.
 
-## Step 3 — Fulfillment (Printful) · ~20 min
+## Step 3 — Fulfillment (Printful, manual) · ~20 min
+Orders are fulfilled **by hand** in the Printful dashboard — the store does not
+auto-submit orders to Printful. The webhook just marks paid orders, and you
+place them in Printful yourself.
 1. Create a [Printful](https://printful.com) account.
-2. Build each product once in Printful (pick garment, upload the design from your own system) → note each **sync variant id** per size.
-3. Put those ids in `products.printful_variant_id` (Supabase).
-4. Settings → Stores → API → create a token → copy `PRINTFUL_API_TOKEN` + store id.
-5. **MVP shortcut:** leave `confirm:false` in `api/_lib/printful.js` so orders arrive as *drafts* you approve by hand. Flip to `true` later for full auto-pilot.
+2. Build each product once in Printful (pick garment, upload the design) → note each **sync variant id** per size.
+3. In your store's **Admin → Products**, enter those ids in the **Printful variants** field per product, e.g. `S:4567, M:4568, L:4569`, then **💾 Save to Live Store**.
+4. When a paid order arrives (status `paid` in Supabase `orders`), create the order in Printful using the saved size→variant ids plus the order's shipping details and email. Mark anything flagged `oversold_review` (stock ran out) before fulfilling.
 
 ## Step 4 — Deploy env vars to Vercel · ~10 min
 The project is already linked to Vercel and live. To go live you only need to add secrets:
