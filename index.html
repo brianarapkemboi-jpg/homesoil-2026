@@ -661,7 +661,8 @@
         ⚠️ <strong>Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer.</strong> All designs are original works created independently to celebrate the sport.<br/>
         © 2026 Home Soil 2026. All rights reserved.
       </p>
-      <button onclick="openAdminLogin()" class="text-xs hover:text-white transition-colors" style="color:rgba(255,255,255,0.25); background:none; border:none; cursor:pointer;">Owner Login</button>
+      <!-- Owner admin is NOT linked here (removed for security). Access it privately
+           at  /#owner  with the password stored server-side in Vercel (ADMIN_PASSWORD). -->
     </div>
   </div>
 </footer>
@@ -911,10 +912,14 @@
 
       <!-- PRODUCTS TAB -->
       <div id="admin-tab-products">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex justify-between items-center mb-2 gap-2 flex-wrap">
           <h3 class="font-bold text-lg text-navy">Manage Products</h3>
-          <button onclick="showAddProductForm()" class="bg-navy text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors">+ Add Product</button>
+          <div class="flex gap-2">
+            <button onclick="showAddProductForm()" class="bg-navy text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors">+ Add Product</button>
+            <button onclick="saveProductsToDB()" id="save-products-btn" class="bg-red-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">💾 Save to Live Store</button>
+          </div>
         </div>
+        <p class="text-xs text-gray-500 mb-4">Edit below, then click <strong>Save to Live Store</strong> to publish changes to all customers. Nothing goes live until you save.</p>
         <div id="admin-product-table" class="space-y-3"></div>
       </div>
 
@@ -1222,6 +1227,27 @@ function updateCartUI() {
 // ===================================================
 // PRODUCT GRID
 // ===================================================
+
+// Load the live catalog from Supabase (the source of truth). The hardcoded
+// PRODUCTS array above is just an offline fallback / first paint.
+async function loadProductsFromDB() {
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/products');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.products || !data.products.length) return;
+    // Replace the in-memory catalog with the database rows (map image_url -> image).
+    PRODUCTS.length = 0;
+    data.products.forEach(p => PRODUCTS.push({
+      id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
+      description: p.description || '', image: p.image_url || '',
+      sizes: p.sizes || [], category: p.category || 'tees'
+    }));
+    renderProducts();
+    if (document.getElementById('ad-product-select')) populateAdProductSelect();
+  } catch (e) { /* offline / API down — keep the fallback catalog */ }
+}
+
 function renderProducts(filter = 'all') {
   const grid = document.getElementById('product-grid');
   const filtered = filter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.category === filter);
@@ -1688,7 +1714,8 @@ function showToast(msg) {
 // ADMIN
 // ===================================================
 // Demo password — NOT real security. Use Supabase Auth in production.
-const ADMIN_PASSWORD = 'admin2026';
+// The admin password is NOT stored in this public code anymore. It lives
+// server-side in Vercel (env var ADMIN_PASSWORD) and is checked by /api/admin-auth.
 
 function openAdminLogin() {
   document.getElementById('admin-login-modal').classList.add('open');
@@ -1700,24 +1727,38 @@ function closeAdminLogin() {
   document.getElementById('admin-login-err').style.display = 'none';
 }
 
-function checkAdminLogin() {
+async function checkAdminLogin() {
   const pw = document.getElementById('admin-pw-input').value;
-  if (pw === ADMIN_PASSWORD) {
-    closeAdminLogin();
-    openAdminDashboard();
-  } else {
-    document.getElementById('admin-login-err').style.display = 'block';
+  const err = document.getElementById('admin-login-err');
+  err.style.display = 'none';
+  const btn = document.querySelector('#admin-login-modal button');
+  const original = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Checking…'; btn.disabled = true; }
+  try {
+    // Verify the password on the server — wrong tries never reveal the real password.
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/admin-auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.ok) {
+      adminPw = pw;           // kept in memory only (not stored) to authorize saves
+      closeAdminLogin();
+      openAdminDashboard();
+    } else {
+      err.textContent = data.error || 'Incorrect password';
+      err.style.display = 'block';
+    }
+  } catch (e) {
+    err.textContent = 'Could not reach the server. Try again.';
+    err.style.display = 'block';
+  } finally {
+    if (btn) { btn.textContent = original; btn.disabled = false; }
   }
 }
 
-// When true, the dashboard opens straight to the Ads tab (used by "See the Ads" CTA)
 let adminWantsAdsTab = false;
-
-function openAdmin() {
-  // Called from "See the Ads" CTA — prompt for login, then land on the Ads tab
-  adminWantsAdsTab = true;
-  openAdminLogin();
-}
+let adminPw = '';  // owner password held in memory during the admin session only
 
 function openAdminDashboard() {
   document.getElementById('admin-dashboard-modal').classList.add('open');
@@ -1743,29 +1784,84 @@ function renderAdminProducts() {
       <div class="flex gap-4 items-start">
         <img src="${p.image}" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
         <div class="flex-1 min-w-0">
-          <p class="font-bold text-navy text-sm mb-2">${p.name}</p>
+          <div class="flex justify-between items-start gap-2 mb-2">
+            <input type="text" value="${(p.name||'').replace(/"/g,'&quot;')}" class="form-input text-sm font-bold" onchange="PRODUCTS[${i}].name = this.value; renderProducts(); populateAdProductSelect();" />
+            <button onclick="deleteProductRow('${p.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 flex-shrink-0" title="Delete product">🗑 Delete</button>
+          </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
             <div>
               <label class="form-label">Price ($)</label>
-              <input type="number" value="${p.price}" class="form-input text-sm" onchange="PRODUCTS[${i}].price = parseFloat(this.value); renderProducts(); updateCheckoutSummary();" />
+              <input type="number" step="0.01" value="${p.price}" class="form-input text-sm" onchange="PRODUCTS[${i}].price = parseFloat(this.value); renderProducts(); updateCheckoutSummary();" />
             </div>
             <div>
               <label class="form-label">Stock</label>
               <input type="number" value="${p.stock}" class="form-input text-sm" onchange="PRODUCTS[${i}].stock = parseInt(this.value); renderProducts();" />
             </div>
-            <div class="col-span-2">
+            <div>
+              <label class="form-label">Category</label>
+              <input type="text" value="${p.category||''}" class="form-input text-sm" onchange="PRODUCTS[${i}].category = this.value; renderProducts();" />
+            </div>
+            <div>
+              <label class="form-label">Sizes (comma-sep)</label>
+              <input type="text" value="${(p.sizes||[]).join(', ')}" class="form-input text-sm" onchange="PRODUCTS[${i}].sizes = this.value.split(',').map(s=>s.trim()).filter(Boolean);" />
+            </div>
+            <div class="col-span-2 md:col-span-4">
               <label class="form-label">Image URL</label>
               <input type="url" value="${p.image}" class="form-input text-sm" onchange="PRODUCTS[${i}].image = this.value; renderProducts();" />
             </div>
           </div>
           <div class="mt-2">
             <label class="form-label">Description</label>
-            <textarea class="form-input text-sm" rows="2" onchange="PRODUCTS[${i}].description = this.value;">${p.description}</textarea>
+            <textarea class="form-input text-sm" rows="2" onchange="PRODUCTS[${i}].description = this.value;">${p.description||''}</textarea>
           </div>
         </div>
       </div>
     </div>
   `).join('');
+}
+
+// Save the whole catalog to Supabase (the live source of truth).
+async function saveProductsToDB() {
+  const btn = document.getElementById('save-products-btn');
+  const original = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = 'Saving…'; btn.disabled = true; }
+  try {
+    const payload = PRODUCTS.map(p => ({
+      id: p.id, name: p.name, price: p.price, stock: p.stock,
+      description: p.description, image_url: p.image,
+      sizes: p.sizes, category: p.category
+    }));
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/admin-products', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPw, products: payload })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Save failed');
+    showToast('✅ Saved ' + data.saved + ' products to the live store');
+  } catch (e) {
+    showToast('Save error: ' + e.message);
+  } finally {
+    if (btn) { btn.innerHTML = original; btn.disabled = false; }
+  }
+}
+
+// Delete a product from the live store (and the local view).
+async function deleteProductRow(id) {
+  if (!confirm('Delete this product from the live store? This cannot be undone.')) return;
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/admin-products', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPw, deleteId: id })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Delete failed');
+    const idx = PRODUCTS.findIndex(p => p.id === id);
+    if (idx > -1) PRODUCTS.splice(idx, 1);
+    renderAdminProducts(); renderProducts(); populateAdProductSelect();
+    showToast('Product deleted');
+  } catch (e) {
+    showToast('Delete error: ' + e.message);
+  }
 }
 
 function showAddProductForm() {
@@ -2065,11 +2161,16 @@ function closeLegal() {
 document.addEventListener('DOMContentLoaded', function() {
   initPixels();          // load ad pixels if IDs configured
   loadStripeIfLive();    // load Stripe.js if live payments configured
-  renderProducts();
+  renderProducts();           // instant first paint from the fallback catalog
+  loadProductsFromDB();        // then sync to the live Supabase catalog
   updateCartUI();
   updateCountdown();
   setInterval(updateCountdown, 1000);
   handlePaymentRedirectReturn(); // show confirmation if returning from a redirect wallet
+
+  // Private owner access: visiting /#owner opens the login (not linked anywhere public).
+  if (window.location.hash === '#owner') openAdminLogin();
+  window.addEventListener('hashchange', function(){ if (window.location.hash === '#owner') openAdminLogin(); });
 
   // Clear inline error styling as soon as the user edits a field
   ['f-email','f-name','f-address','f-zip','f-city','f-card','f-expiry','f-cvv'].forEach(function(id){
