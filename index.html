@@ -1760,8 +1760,9 @@ async function checkAdminLogin() {
 let adminWantsAdsTab = false;
 let adminPw = '';  // owner password held in memory during the admin session only
 
-function openAdminDashboard() {
+async function openAdminDashboard() {
   document.getElementById('admin-dashboard-modal').classList.add('open');
+  await loadAdminProductsFull();   // pull full rows incl. Printful variant ids
   renderAdminProducts();
   populateAdProductSelect();
   if (adminWantsAdsTab) {
@@ -1775,6 +1776,42 @@ function openAdminDashboard() {
 
 function closeAdminDashboard() {
   document.getElementById('admin-dashboard-modal').classList.remove('open');
+}
+
+// Load the full catalog (including the hidden per-size Printful variant ids)
+// for editing. Uses the authenticated admin endpoint — the public /api/products
+// omits those columns. Falls back silently to whatever catalog is loaded.
+async function loadAdminProductsFull() {
+  if (!adminPw) return;
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/admin-products', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPw })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok || !Array.isArray(data.products)) return;
+    PRODUCTS.length = 0;
+    data.products.forEach(p => PRODUCTS.push({
+      id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
+      description: p.description || '', image: p.image_url || '',
+      sizes: p.sizes || [], category: p.category || 'tees',
+      printful_variants: p.printful_variants || {}
+    }));
+  } catch (e) { /* offline / not live — keep current catalog */ }
+}
+
+// "S:4567, M:4568" <-> { S: 4567, M: 4568 }
+function formatVariants(v) {
+  if (!v || typeof v !== 'object') return '';
+  return Object.entries(v).map(([s, id]) => `${s}:${id}`).join(', ');
+}
+function parseVariants(str) {
+  const out = {};
+  (str || '').split(',').forEach(pair => {
+    const [k, val] = pair.split(':').map(x => (x || '').trim());
+    if (k && val) out[k] = /^\d+$/.test(val) ? Number(val) : val;
+  });
+  return out;
 }
 
 function renderAdminProducts() {
@@ -1809,6 +1846,10 @@ function renderAdminProducts() {
               <label class="form-label">Image URL</label>
               <input type="url" value="${p.image}" class="form-input text-sm" onchange="PRODUCTS[${i}].image = this.value; renderProducts();" />
             </div>
+            <div class="col-span-2 md:col-span-4">
+              <label class="form-label">Printful variants — size:id, comma-separated (for manual fulfillment)</label>
+              <input type="text" value="${formatVariants(p.printful_variants).replace(/"/g,'&quot;')}" class="form-input text-sm" placeholder="S:4567, M:4568, L:4569, XL:4570" onchange="PRODUCTS[${i}].printful_variants = parseVariants(this.value);" />
+            </div>
           </div>
           <div class="mt-2">
             <label class="form-label">Description</label>
@@ -1829,7 +1870,8 @@ async function saveProductsToDB() {
     const payload = PRODUCTS.map(p => ({
       id: p.id, name: p.name, price: p.price, stock: p.stock,
       description: p.description, image_url: p.image,
-      sizes: p.sizes, category: p.category
+      sizes: p.sizes, category: p.category,
+      printful_variants: p.printful_variants || {}
     }));
     const res = await fetch(STORE_CONFIG.backendUrl + '/api/admin-products', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1870,7 +1912,7 @@ function showAddProductForm() {
     id: newId, name: 'New Product', price: 30, stock: 20,
     description: 'Product description here.',
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
-    sizes: ['S','M','L','XL'], category: 'tees'
+    sizes: ['S','M','L','XL'], category: 'tees', printful_variants: {}
   });
   renderAdminProducts();
   renderProducts();

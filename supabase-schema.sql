@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS products (
   sizes               TEXT[],
   category            TEXT,
   printful_product_id BIGINT,
-  printful_variant_id BIGINT,
+  printful_variant_id BIGINT,                 -- legacy single-variant id (kept for back-compat)
+  printful_variants   JSONB DEFAULT '{}',     -- per-size sync-variant map, e.g. {"S":4567,"M":4568}
   created_at          TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -33,7 +34,7 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping           NUMERIC(10,2),
   tax                NUMERIC(10,2),
   total              NUMERIC(10,2),
-  status             TEXT DEFAULT 'pending',  -- pending | paid | fulfilling | needs_manual_fulfillment | shipped
+  status             TEXT DEFAULT 'pending',  -- pending | paid | oversold_review | shipped | refunded
   payment_method     TEXT,
   printful_order_id  BIGINT,
   created_at         TIMESTAMPTZ DEFAULT NOW()
@@ -57,10 +58,41 @@ ALTER TABLE designs ENABLE ROW LEVEL SECURITY;
 -- service-role only.
 
 -- ---------- STOCK DECREMENT (called by the Stripe webhook) ----------
+-- Atomic + conditional: only decrements when there is enough stock, so two
+-- concurrent orders for the last unit can't both succeed. Returns the remaining
+-- stock, or -1 when there wasn't enough (the webhook flags those orders for
+-- review instead of letting stock go negative).
+-- DROP first: this function's return type changed (void -> integer), and
+-- Postgres won't let CREATE OR REPLACE change a return type.
+DROP FUNCTION IF EXISTS decrement_stock(TEXT, INTEGER);
 CREATE OR REPLACE FUNCTION decrement_stock(p_id TEXT, p_qty INTEGER)
-RETURNS void LANGUAGE sql AS $$
-  UPDATE products SET stock = GREATEST(stock - p_qty, 0) WHERE id = p_id;
+RETURNS INTEGER LANGUAGE plpgsql AS $$
+DECLARE remaining INTEGER;
+BEGIN
+  UPDATE products SET stock = stock - p_qty
+    WHERE id = p_id AND stock >= p_qty
+    RETURNING stock INTO remaining;
+  IF NOT FOUND THEN
+    RETURN -1;
+  END IF;
+  RETURN remaining;
+END;
 $$;
+
+-- ---------- ADMIN AUTH THROTTLE (brute-force protection) ----------
+-- Durable across serverless instances. The admin endpoints record failed
+-- password attempts per client IP and lock the IP after too many.
+CREATE TABLE IF NOT EXISTS auth_throttle (
+  ip           TEXT PRIMARY KEY,
+  fails        INTEGER NOT NULL DEFAULT 0,
+  locked_until TIMESTAMPTZ,
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE auth_throttle ENABLE ROW LEVEL SECURITY;  -- service-role only
+
+-- ---------- MIGRATIONS (safe to re-run on an existing database) ----------
+-- If you created the tables before these columns existed, run this once.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS printful_variants JSONB DEFAULT '{}';
 
 -- ---------- SEED: load the 10 launch products ----------
 -- (Optional) Copy your PRODUCTS array values here, or insert via the admin later.
