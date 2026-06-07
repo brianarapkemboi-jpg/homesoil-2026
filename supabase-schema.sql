@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping           NUMERIC(10,2),
   tax                NUMERIC(10,2),
   total              NUMERIC(10,2),
-  status             TEXT DEFAULT 'pending',  -- pending | paid | oversold_review | shipped | refunded
+  status             TEXT DEFAULT 'pending',  -- pending | paid | oversold_review | shipped | refunded | partial_refund
   payment_method     TEXT,
   printful_order_id  BIGINT,
   created_at         TIMESTAMPTZ DEFAULT NOW()

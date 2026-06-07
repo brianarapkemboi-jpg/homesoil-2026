@@ -13,14 +13,14 @@
   <meta property="og:site_name" content="Home Soil 2026" />
   <meta property="og:title" content="Home Soil 2026 — Fan-Inspired USA World Cup Gear" />
   <meta property="og:description" content="The World Cup comes home. Premium fan-inspired gear, printed in the USA, ships in 3–5 days." />
-  <meta property="og:url" content="https://brianarapkemboi-jpg.github.io/homesoil-2026/" />
+  <meta property="og:url" content="https://homesoil2026.com/" />
   <meta property="og:image" content="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&q=80" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Home Soil 2026 — Fan-Inspired USA World Cup Gear" />
   <meta name="twitter:description" content="The World Cup comes home. Premium fan-inspired gear, printed in the USA." />
   <meta name="twitter:image" content="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&q=80" />
   <meta name="theme-color" content="#002868" />
-  <link rel="canonical" href="https://brianarapkemboi-jpg.github.io/homesoil-2026/" />
+  <link rel="canonical" href="https://homesoil2026.com/" />
 
   <!-- ===== ANALYTICS & AD PIXELS =====
        Required so your generated ads can track sales. Paste your real IDs into
@@ -651,6 +651,7 @@
           <li><a href="mailto:support@homesoil2026.com" class="hover:text-white transition-colors">Contact Us</a></li>
           <li><button onclick="openLegal('privacy')" class="hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;padding:0;">Privacy Policy</button></li>
           <li><button onclick="openLegal('terms')" class="hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;padding:0;">Terms of Service</button></li>
+          <li><button onclick="openCookiePreferences()" class="hover:text-white transition-colors" style="background:none;border:none;cursor:pointer;color:inherit;padding:0;">Cookie Preferences</button></li>
         </ul>
       </div>
     </div>
@@ -666,6 +667,24 @@
     </div>
   </div>
 </footer>
+
+<!-- ====================================================
+     COOKIE / MARKETING CONSENT BANNER
+     Only shown when ad pixels are configured AND the visitor hasn't chosen yet.
+     Pixels do not load until "Accept" is clicked.
+     ==================================================== -->
+<div id="consent-banner" role="dialog" aria-label="Cookie consent" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#0a1733;color:#fff;padding:16px;box-shadow:0 -4px 20px rgba(0,0,0,0.25);">
+  <div style="max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;">
+    <p style="font-size:13px;line-height:1.5;margin:0;flex:1 1 320px;color:rgba(255,255,255,0.85);">
+      We use cookies for analytics and advertising measurement to improve your experience. Strictly necessary cookies (e.g. your cart) are always on. See our
+      <button onclick="openLegal('privacy')" style="background:none;border:none;color:#fff;text-decoration:underline;cursor:pointer;padding:0;font-size:13px;">Privacy Policy</button>.
+    </p>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <button onclick="declineConsent()" style="background:transparent;border:1px solid rgba(255,255,255,0.4);color:#fff;font-weight:600;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;">Decline</button>
+      <button onclick="acceptConsent()" style="background:#dc2626;border:none;color:#fff;font-weight:700;font-size:13px;padding:8px 18px;border-radius:8px;cursor:pointer;">Accept</button>
+    </div>
+  </div>
+</div>
 
 <!-- ====================================================
      CART DRAWER
@@ -1015,6 +1034,13 @@ const STORE_CONFIG = {
 // True only when a backend + Stripe key are configured.
 const LIVE_MODE = !!(STORE_CONFIG.backendUrl && STORE_CONFIG.stripePublishableKey);
 
+// Escape user/DB-supplied text before putting it into innerHTML (defense in depth
+// against stored XSS via product names, images, descriptions, etc).
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 // ===================================================
 // PRODUCT DATA — edit prices, stock, descriptions here
 // All artwork is fan-inspired original work.
@@ -1200,10 +1226,10 @@ function updateCartUI() {
     footer.style.display = 'block';
     list.innerHTML = cart.map(item => `
       <div class="flex gap-3 pb-3 mb-3 border-b border-gray-100">
-        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
+        <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
         <div class="flex-1 min-w-0">
-          <p class="font-semibold text-sm text-navy truncate">${item.name}</p>
-          <p class="text-xs text-gray-400">${item.size}</p>
+          <p class="font-semibold text-sm text-navy truncate">${escapeHtml(item.name)}</p>
+          <p class="text-xs text-gray-400">${escapeHtml(item.size)}</p>
           <div class="flex items-center justify-between mt-2">
             <div class="flex items-center gap-2">
               <button onclick="updateCartQty('${item.key}',-1)" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100">−</button>
@@ -1258,16 +1284,16 @@ function renderProducts(filter = 'all') {
     return `
       <div class="product-card" data-id="${p.id}">
         <div class="product-img-wrap">
-          <img src="${p.image}" alt="${p.name}" loading="lazy" />
+          <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" />
           ${isLow ? `<span class="stock-badge low">⚡ Only ${p.stock} left</span>` : ''}
           ${isNew && !isLow ? `<span class="stock-badge new">NEW</span>` : ''}
         </div>
         <div class="p-3">
-          <p class="font-bold text-sm text-navy leading-snug mb-0.5">${p.name}</p>
+          <p class="font-bold text-sm text-navy leading-snug mb-0.5">${escapeHtml(p.name)}</p>
           <!-- Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer. -->
           <p class="text-red-600 font-black text-lg mb-2">$${p.price}</p>
           <div class="flex flex-wrap gap-1 mb-3" id="sizes-${p.id}">
-            ${p.sizes.map((s, i) => `<button class="size-btn ${i===0?'active':''}" data-size="${s}" onclick="selectSize('${p.id}','${s}',this)">${s}</button>`).join('')}
+            ${p.sizes.map((s, i) => `<button class="size-btn ${i===0?'active':''}" data-size="${escapeHtml(s)}" onclick="selectSize('${escapeHtml(p.id)}','${escapeHtml(s)}',this)">${escapeHtml(s)}</button>`).join('')}
           </div>
           <div class="grid grid-cols-1 gap-2">
             <button class="btn-quick-add" onclick="quickAdd('${p.id}')">+ Quick Add</button>
@@ -1382,12 +1408,12 @@ function updateCheckoutSummary() {
   summaryEl.innerHTML = cart.map(item => `
     <div class="flex gap-3">
       <div class="relative flex-shrink-0">
-        <img src="${item.image}" alt="${item.name}" class="w-14 h-14 rounded-lg object-cover" loading="lazy" />
+        <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="w-14 h-14 rounded-lg object-cover" loading="lazy" />
         <span class="absolute -top-1.5 -right-1.5 bg-gray-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">${item.qty}</span>
       </div>
       <div class="flex-1">
-        <p class="text-sm font-semibold text-navy">${item.name}</p>
-        <p class="text-xs text-gray-400">${item.size}</p>
+        <p class="text-sm font-semibold text-navy">${escapeHtml(item.name)}</p>
+        <p class="text-xs text-gray-400">${escapeHtml(item.size)}</p>
       </div>
       <p class="text-sm font-bold text-navy">$${(item.price * item.qty).toFixed(2)}</p>
     </div>
@@ -2117,6 +2143,40 @@ function initPixels() {
   }
 }
 
+// ---- Cookie / marketing consent (gates the ad pixels above) ----
+function hasPixels() {
+  const px = STORE_CONFIG.pixels || {};
+  return !!(px.metaPixelId || px.tiktokPixelId || px.ga4Id);
+}
+// Decide whether to load pixels, show the banner, or do nothing. Pixels only
+// load after explicit consent. With no pixels configured there is nothing to
+// consent to (the cart's localStorage is strictly necessary and exempt).
+function initConsentAndPixels() {
+  if (!hasPixels()) return;
+  const c = localStorage.getItem('hs2026-consent');
+  if (c === 'granted') { initPixels(); return; }
+  if (c === 'denied') return;
+  const b = document.getElementById('consent-banner'); if (b) b.style.display = 'block';
+}
+function acceptConsent() {
+  localStorage.setItem('hs2026-consent', 'granted');
+  const b = document.getElementById('consent-banner'); if (b) b.style.display = 'none';
+  initPixels();
+}
+function declineConsent() {
+  localStorage.setItem('hs2026-consent', 'denied');
+  const b = document.getElementById('consent-banner'); if (b) b.style.display = 'none';
+}
+// Footer "Cookie Preferences" — let visitors change their mind (and withdraw).
+function openCookiePreferences() {
+  localStorage.removeItem('hs2026-consent');
+  if (hasPixels()) {
+    const b = document.getElementById('consent-banner'); if (b) b.style.display = 'block';
+  } else {
+    showToast('No advertising cookies are active on this site.');
+  }
+}
+
 // Unified event tracker — fires to whichever pixels are active.
 function trackEvent(name, data) {
   data = data || {};
@@ -2201,7 +2261,7 @@ function closeLegal() {
 // INIT
 // ===================================================
 document.addEventListener('DOMContentLoaded', function() {
-  initPixels();          // load ad pixels if IDs configured
+  initConsentAndPixels();  // load ad pixels only after consent (if IDs configured)
   loadStripeIfLive();    // load Stripe.js if live payments configured
   renderProducts();           // instant first paint from the fallback catalog
   loadProductsFromDB();        // then sync to the live Supabase catalog
