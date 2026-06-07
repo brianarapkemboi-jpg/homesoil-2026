@@ -1,9 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
-  "crons": [
-    { "path": "/api/score-predictions", "schedule": "0 7 * * *" }
-  ],
   "headers": [
     {
       "source": "/api/(.*)",
