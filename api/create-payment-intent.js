@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, items, customer, paymentMethod } = req.body || {};
+    const { email, items, customer, paymentMethod, promoCode } = req.body || {};
     // email is optional at intent-creation time (Stripe's Payment Element mounts
     // before the customer types it); the final email is captured at confirm +
     // via the webhook. Items are required so we can price the order.
@@ -60,9 +60,16 @@ export default async function handler(req, res) {
       // needed to fulfil the exact Printify variant).
       orderItems.push({ id: p.id, name: p.name, price: p.price, size: item.size, color: item.color || null, qty });
     }
+    // --- Optional promo code (single env-configured code, e.g. from the Pick'em
+    //     welcome email). Validated server-side so a customer can't invent one. ---
+    const discountPct = promoPercent(promoCode);
+    const discount = +(subtotal * discountPct / 100).toFixed(2);
+    const netSubtotal = subtotal - discount;
+
+    // Free-ship threshold uses the pre-discount goods subtotal (more generous).
     const shipping = subtotal >= FREE_SHIP_THRESHOLD ? 0 : FLAT_SHIPPING;
-    const tax = subtotal * TAX_RATE;
-    const total = subtotal + shipping + tax;
+    const tax = netSubtotal * TAX_RATE;
+    const total = netSubtotal + shipping + tax;
     const amountCents = Math.round(total * 100);
 
     // --- Record a pending order ---
@@ -84,16 +91,33 @@ export default async function handler(req, res) {
       ...(email ? { receipt_email: email } : {}),
       // Lets Stripe present cards, Apple Pay, Google Pay, Cash App automatically
       automatic_payment_methods: { enabled: true },
-      metadata: { order_id: order.id, email }
+      metadata: {
+        order_id: order.id,
+        email,
+        ...(discount > 0 ? { promo_code: String(promoCode).trim(), discount: discount.toFixed(2) } : {})
+      }
     });
 
     return res.status(200).json({
       clientSecret: intent.client_secret,
       orderId: order.id,
-      amount: total
+      amount: total,
+      discount,
+      discountPct,
+      promoApplied: discount > 0
     });
   } catch (err) {
     console.error('create-payment-intent error:', err);
     return res.status(500).json({ error: err.message || 'Server error' });
   }
+}
+
+// Validate a promo code against the single env-configured code. Returns the
+// discount percent (0 when no/invalid code). PROMO_CODE + PROMO_PERCENT in Vercel.
+function promoPercent(code) {
+  const want = (process.env.PROMO_CODE || '').trim().toLowerCase();
+  const pct = parseFloat(process.env.PROMO_PERCENT || '0');
+  if (!want || !code) return 0;
+  if (String(code).trim().toLowerCase() === want && pct > 0 && pct < 100) return pct;
+  return 0;
 }
