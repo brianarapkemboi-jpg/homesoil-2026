@@ -178,13 +178,6 @@
     .btn-buy-now:hover { background:var(--red-dk); }
     .btn-buy-now:active { transform:scale(0.98); }
 
-    /* ===== BUNDLE ===== */
-    .bundle-card {
-      background: linear-gradient(135deg, var(--navy) 0%, #001a4d 100%);
-      border-radius:16px; color:#fff; overflow:hidden;
-      box-shadow: 0 8px 32px rgba(0,40,104,0.3);
-    }
-
     /* ===== CART DRAWER ===== */
     .cart-overlay {
       position:fixed; inset:0; background:rgba(0,0,0,0.5);
@@ -334,7 +327,6 @@
     <a href="#" class="font-display text-white font-black text-2xl tracking-tight">HOME SOIL <span class="text-red-400" style="color:#e05c6e">2026</span></a>
     <div class="flex items-center gap-3">
       <a href="#products" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Shop</a>
-      <a href="#bundles" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Bundles</a>
       <button onclick="openCart()" class="relative text-white p-2 hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors" aria-label="Open cart">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style="background:var(--red); display:none;">0</span>
@@ -377,9 +369,6 @@
       <a href="#products" class="btn-primary inline-block text-center" style="width:auto; padding:15px 36px; font-size:1.05rem;">
         🛒 Shop the Collection
       </a>
-      <a href="#bundles" class="inline-block text-center border-2 border-white border-opacity-40 text-white rounded-xl px-9 py-4 font-bold text-base hover:bg-white hover:bg-opacity-10 transition-colors" style="border-color:rgba(255,255,255,0.4);">
-        🎁 View Bundles &amp; Save
-      </a>
     </div>
   </div>
 </section>
@@ -421,64 +410,6 @@
     </style>
 
     <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"></div>
-  </div>
-</section>
-
-<!-- ====================================================
-     SECTION 4: BUNDLES
-     ==================================================== -->
-<section id="bundles" class="py-16 px-4" style="background:var(--navy);">
-  <div class="max-w-5xl mx-auto">
-    <div class="text-center mb-10">
-      <h2 class="font-display font-black text-white uppercase text-5xl mb-2">Fan Bundles</h2>
-      <p class="text-white text-opacity-70" style="color:rgba(255,255,255,0.7);">Stack savings. Look the part. Arrive ready.</p>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <!-- Bundle 1 -->
-      <div class="bundle-card p-8">
-        <div class="flex items-start justify-between mb-4">
-          <div>
-            <span class="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-1 block">Most Popular</span>
-            <h3 class="font-display font-black text-white text-3xl uppercase">USA Fan Pack</h3>
-            <p class="text-white text-opacity-70 text-sm mt-1" style="color:rgba(255,255,255,0.7);">Premium Tee + Snapback Hat + Enamel Pin</p>
-          </div>
-          <div class="text-right">
-            <p class="text-white text-opacity-50 line-through text-lg" style="color:rgba(255,255,255,0.5);">$72</p>
-            <p class="text-yellow-400 font-black text-3xl">$54</p>
-            <span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full" style="background:var(--red);">SAVE $18</span>
-          </div>
-        </div>
-        <ul class="text-white text-opacity-80 text-sm space-y-1 mb-6" style="color:rgba(255,255,255,0.8);">
-          <li>• "Home Soil" Premium Heavyweight Tee (your size)</li>
-          <li>• Stars & Stripes Snapback Hat</li>
-          <li>• Limited Edition 2026 Enamel Pin</li>
-        </ul>
-        <button onclick="addBundle('fan-pack')" class="btn-primary font-black text-lg">Add Bundle to Cart — $54</button>
-      </div>
-
-      <!-- Bundle 2 -->
-      <div class="bundle-card p-8">
-        <div class="flex items-start justify-between mb-4">
-          <div>
-            <span class="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-1 block">Best Value</span>
-            <h3 class="font-display font-black text-white text-3xl uppercase">Watch Party Kit</h3>
-            <p class="text-white text-opacity-70 text-sm mt-1" style="color:rgba(255,255,255,0.7);">Hoodie + Scarf + 2× Enamel Pins</p>
-          </div>
-          <div class="text-right">
-            <p class="text-white text-opacity-50 line-through text-lg" style="color:rgba(255,255,255,0.5);">$98</p>
-            <p class="text-yellow-400 font-black text-3xl">$72</p>
-            <span class="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full" style="background:var(--red);">SAVE $26</span>
-          </div>
-        </div>
-        <ul class="text-white text-opacity-80 text-sm space-y-1 mb-6" style="color:rgba(255,255,255,0.8);">
-          <li>• "Home Soil" Premium Hoodie (your size)</li>
-          <li>• Red/White/Blue Fan Scarf</li>
-          <li>• 2× Limited Edition Enamel Pins</li>
-        </ul>
-        <button onclick="addBundle('watch-party')" class="btn-primary font-black text-lg">Add Bundle to Cart — $72</button>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -667,7 +598,6 @@
         <h4 class="font-bold text-sm uppercase tracking-widest mb-4" style="color:rgba(255,255,255,0.5);">Shop</h4>
         <ul class="space-y-2 text-sm" style="color:rgba(255,255,255,0.7);">
           <li><a href="#products" class="hover:text-white transition-colors">All Products</a></li>
-          <li><a href="#bundles" class="hover:text-white transition-colors">Fan Bundles</a></li>
           <li><a href="#" class="hover:text-white transition-colors">New Arrivals</a></li>
           <li><a href="#" class="hover:text-white transition-colors">Size Guide</a></li>
         </ul>
@@ -1392,23 +1322,6 @@ function filterProducts(filter, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
   btn.classList.add('active-filter');
   renderProducts(filter);
-}
-
-// ===================================================
-// BUNDLES
-// ===================================================
-function addBundle(bundleId) {
-  // Use a product image as the bundle thumbnail when available (the catalog is
-  // loaded async now, so guard against it being empty).
-  const bundleImg = (PRODUCTS[0] && PRODUCTS[0].image) || '';
-  if (bundleId === 'fan-pack') {
-    cart.push({ key: 'bundle-fan-pack', productId: 'bundle', name: 'USA Fan Pack Bundle', price: 54, size: 'Bundle', qty: 1, image: bundleImg });
-  } else if (bundleId === 'watch-party') {
-    cart.push({ key: 'bundle-watch-party', productId: 'bundle', name: 'Watch Party Kit Bundle', price: 72, size: 'Bundle', qty: 1, image: ((PRODUCTS[2] || PRODUCTS[0]) && (PRODUCTS[2] || PRODUCTS[0]).image) || '' });
-  }
-  saveCart();
-  showToast('Bundle added to cart!');
-  openCart();
 }
 
 // ===================================================
