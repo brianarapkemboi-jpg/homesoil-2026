@@ -139,6 +139,15 @@
     }
     .size-btn.active, .size-btn:hover { background:var(--navy); border-color:var(--navy); color:#fff; }
 
+    /* Colour swatches (Printify colours). Active gets a navy ring. */
+    .color-swatch {
+      width:22px; height:22px; border-radius:9999px; padding:0; cursor:pointer;
+      border:1px solid rgba(0,0,0,.2); box-shadow:0 0 0 2px #fff inset;
+      transition: box-shadow 100ms, transform 100ms;
+    }
+    .color-swatch:hover { transform:scale(1.08); }
+    .color-swatch.active { box-shadow:0 0 0 2px #fff inset, 0 0 0 2px var(--navy); border-color:var(--navy); }
+
     .btn-quick-add {
       background:var(--navy); color:#fff; border:none; border-radius:8px;
       padding:10px 16px; font-size:.85rem; font-weight:700; cursor:pointer;
@@ -1188,15 +1197,22 @@ function cartCount() {
   return cart.reduce((sum, item) => sum + item.qty, 0);
 }
 
-function addToCart(productId, size, qty = 1) {
+function addToCart(productId, size, qty = 1, color = null) {
   const product = PRODUCTS.find(p => p.id === productId);
   if (!product) return;
-  const key = productId + '-' + size;
+  // colour is part of the cart key so the same garment in two colours stays separate.
+  const key = productId + '-' + (color ? color + '-' : '') + size;
   const existing = cart.find(c => c.key === key);
   if (existing) {
     existing.qty += qty;
   } else {
-    cart.push({ key, productId, name: product.name, price: product.price, size, qty, image: product.image });
+    // Use the colour-specific image when we have one.
+    let image = product.image;
+    if (color && product.colors) {
+      const c = product.colors.find(c => c.name === color);
+      if (c && c.image) image = c.image;
+    }
+    cart.push({ key, productId, name: product.name, price: product.price, size, color: color || null, qty, image });
   }
   saveCart();
   showToast(`${product.name} added to cart`);
@@ -1240,7 +1256,7 @@ function updateCartUI() {
         <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="w-16 h-16 rounded-lg object-cover flex-shrink-0" loading="lazy" />
         <div class="flex-1 min-w-0">
           <p class="font-semibold text-sm text-navy truncate">${escapeHtml(item.name)}</p>
-          <p class="text-xs text-gray-400">${escapeHtml(item.size)}</p>
+          <p class="text-xs text-gray-400">${item.color ? escapeHtml(item.color) + ' · ' : ''}${escapeHtml(item.size)}</p>
           <div class="flex items-center justify-between mt-2">
             <div class="flex items-center gap-2">
               <button onclick="updateCartQty('${item.key}',-1)" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100">−</button>
@@ -1278,7 +1294,9 @@ async function loadProductsFromDB() {
     data.products.forEach(p => PRODUCTS.push({
       id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
       description: p.description || '', image: p.image_url || '',
-      sizes: p.sizes || [], category: p.category || 'tees'
+      sizes: p.sizes || [], category: p.category || 'tees',
+      colors: (p.variant_options && p.variant_options.colors) || [],
+      colorMatrix: (p.variant_options && p.variant_options.matrix) || {}
     }));
     renderProducts();
     if (document.getElementById('ad-product-select')) populateAdProductSelect();
@@ -1295,7 +1313,7 @@ function renderProducts(filter = 'all') {
     return `
       <div class="product-card" data-id="${p.id}">
         <div class="product-img-wrap">
-          <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" />
+          <img id="img-${escapeHtml(p.id)}" src="${escapeHtml((p.colors && p.colors[0] && p.colors[0].image) || p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" />
           ${isLow ? `<span class="stock-badge low">⚡ Only ${p.stock} left</span>` : ''}
           ${isNew && !isLow ? `<span class="stock-badge new">NEW</span>` : ''}
         </div>
@@ -1303,8 +1321,9 @@ function renderProducts(filter = 'all') {
           <p class="font-bold text-sm text-navy leading-snug mb-0.5">${escapeHtml(p.name)}</p>
           <!-- Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer. -->
           <p class="text-red-600 font-black text-lg mb-2">$${p.price}</p>
-          <div class="flex flex-wrap gap-1 mb-3" id="sizes-${p.id}">
-            ${p.sizes.map((s, i) => `<button class="size-btn ${i===0?'active':''}" data-size="${escapeHtml(s)}" onclick="selectSize('${escapeHtml(p.id)}','${escapeHtml(s)}',this)">${escapeHtml(s)}</button>`).join('')}
+          ${colorSwatchesHtml(p)}
+          <div class="flex flex-wrap gap-1 mb-3" id="sizes-${escapeHtml(p.id)}">
+            ${sizeButtonsHtml(p, p.colors && p.colors[0] ? p.colors[0].name : null)}
           </div>
           <div class="grid grid-cols-1 gap-2">
             <button class="btn-quick-add" onclick="quickAdd('${p.id}')">+ Quick Add</button>
@@ -1315,6 +1334,45 @@ function renderProducts(filter = 'all') {
       </div>
     `;
   }).join('');
+}
+
+// Colour swatches for a product (empty string when the product has one colour).
+function colorSwatchesHtml(p) {
+  if (!p.colors || !p.colors.length) return '';
+  return `<div class="flex flex-wrap gap-1.5 mb-2 items-center" id="colors-${escapeHtml(p.id)}">
+    ${p.colors.map((c, i) => `<button class="color-swatch ${i===0?'active':''}" data-color="${escapeHtml(c.name)}" title="${escapeHtml(c.name)}" aria-label="${escapeHtml(c.name)}" onclick="selectColor('${escapeHtml(p.id)}','${escapeHtml(c.name)}',this)" style="background:${c.hex?escapeHtml(c.hex):'#cccccc'}"></button>`).join('')}
+  </div>`;
+}
+
+// Size buttons, scoped to the available sizes for the chosen colour (falls back
+// to the product's full size list when there are no colours).
+function sizeButtonsHtml(p, color) {
+  const sizes = (color && p.colorMatrix && p.colorMatrix[color]) ? p.colorMatrix[color] : (p.sizes || []);
+  return sizes.map((s, i) => `<button class="size-btn ${i===0?'active':''}" data-size="${escapeHtml(s)}" onclick="selectSize('${escapeHtml(p.id)}','${escapeHtml(s)}',this)">${escapeHtml(s)}</button>`).join('');
+}
+
+function selectColor(productId, color, btn) {
+  const container = document.getElementById('colors-' + productId);
+  if (container) {
+    container.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (!product) return;
+  // Swap the preview image to the chosen colour.
+  const img = document.getElementById('img-' + productId);
+  const c = (product.colors || []).find(c => c.name === color);
+  if (img && c && c.image) img.src = c.image;
+  // Re-render the sizes available for this colour.
+  const sizesEl = document.getElementById('sizes-' + productId);
+  if (sizesEl) sizesEl.innerHTML = sizeButtonsHtml(product, color);
+}
+
+function getSelectedColor(productId) {
+  const container = document.getElementById('colors-' + productId);
+  if (!container) return null;
+  const active = container.querySelector('.color-swatch.active');
+  return active ? active.dataset.color : null;
 }
 
 function selectSize(productId, size, btn) {
@@ -1331,16 +1389,18 @@ function getSelectedSize(productId) {
 }
 
 function quickAdd(productId) {
+  const color = getSelectedColor(productId);
   const size = getSelectedSize(productId);
   if (!size) { showToast('Please select a size'); return; }
-  addToCart(productId, size);
+  addToCart(productId, size, 1, color);
   openCart();
 }
 
 function buyNow(productId) {
+  const color = getSelectedColor(productId);
   const size = getSelectedSize(productId);
   if (!size) { showToast('Please select a size'); return; }
-  addToCart(productId, size);
+  addToCart(productId, size, 1, color);
   openCheckout();
 }
 
@@ -1651,7 +1711,7 @@ function buildOrderPayload(email, method) {
       city: (document.getElementById('f-city').value || '').trim(),
       zip: (document.getElementById('f-zip').value || '').trim()
     },
-    items: cart.map(i => ({ id: i.productId, name: i.name, size: i.size, qty: i.qty, price: i.price })),
+    items: cart.map(i => ({ id: i.productId, name: i.name, size: i.size, color: i.color || null, qty: i.qty, price: i.price })),
     amounts: { subtotal: +sub.toFixed(2), shipping: +ship.toFixed(2), tax: +tax.toFixed(2), total: +(sub+ship+tax).toFixed(2) }
   };
 }
@@ -1832,6 +1892,8 @@ async function loadAdminProductsFull() {
       id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
       description: p.description || '', image: p.image_url || '',
       sizes: p.sizes || [], category: p.category || 'tees',
+      colors: (p.variant_options && p.variant_options.colors) || [],
+      colorMatrix: (p.variant_options && p.variant_options.matrix) || {},
       printify_product_id: p.printify_product_id || null,
       printify_variants: p.printify_variants || {}
     }));

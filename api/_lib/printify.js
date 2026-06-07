@@ -90,42 +90,78 @@ function plainText(html = '') {
     .trim();
 }
 
+// We join color + size into the fulfillment-map key. "::" is unlikely to appear
+// in a Printify option title.
+const VKEY = (color, size) => (color ? `${color}::${size}` : size);
+
 // Turn a raw Printify product into a row matching our Supabase `products` schema.
-// Print-on-demand has no real inventory, so stock is set high enough never to
-// block checkout (the Stripe webhook still re-prices authoritatively).
+// Captures BOTH the Size and Color options so the storefront can let customers
+// pick a colour (with a per-colour preview image) and we can fulfil the exact
+// colour+size variant. Print-on-demand has no real inventory, so stock is set
+// high enough never to block checkout (the Stripe webhook still re-prices).
 export function mapPrintifyProduct(p, shopId = printifyShopId()) {
   const enabled = (p.variants || []).filter(v => v.is_enabled);
   const usable = enabled.length ? enabled : (p.variants || []);
 
-  // Resolve the "Size" option so we can label variants S/M/L… for the storefront.
+  // Resolve the Size and Colour options → maps from option-value id to value.
   const sizeOption = (p.options || []).find(o => /size/i.test(o.name) || o.type === 'size');
-  const sizeValueIds = new Set((sizeOption?.values || []).map(v => v.id));
-  const sizeIdToTitle = {};
-  (sizeOption?.values || []).forEach(v => { sizeIdToTitle[v.id] = v.title; });
+  const colorOption = (p.options || []).find(o => /colou?r/i.test(o.name) || o.type === 'color');
+  const sizeIds = {};
+  (sizeOption?.values || []).forEach(v => { sizeIds[v.id] = v; });
+  const colorIds = {};
+  (colorOption?.values || []).forEach(v => { colorIds[v.id] = v; });
 
-  // size title -> Printify variant id (first enabled variant for that size).
-  // Used to fulfill the exact size the customer picked.
-  const printify_variants = {};
-  const sizes = [];
-  for (const v of usable) {
-    const sizeId = (v.options || []).find(id => sizeValueIds.has(id));
-    const sizeTitle = sizeId != null ? sizeIdToTitle[sizeId] : (v.title || 'One Size');
-    if (!(sizeTitle in printify_variants)) {
-      printify_variants[sizeTitle] = v.id;
-      sizes.push(sizeTitle);
+  // variantId -> image src (default image wins) so each colour shows its own art.
+  const variantImage = {};
+  for (const img of (p.images || [])) {
+    for (const vid of (img.variant_ids || [])) {
+      if (img.is_default || !(vid in variantImage)) variantImage[vid] = img.src;
     }
   }
+  const defaultImg = (p.images || []).find(i => i.is_default) || (p.images || [])[0];
+
+  // color::size (or size when there's no colour) -> Printify variant id.
+  const printify_variants = {};
+  const sizes = [];                 // union of sizes across colours (back-compat)
+  const colors = [];                // [{ name, hex, image }] in Printify's order
+  const colorSeen = new Set();
+  const matrix = {};                // color -> [available sizes]
+  const cents = [];
+
+  for (const v of usable) {
+    const ids = v.options || [];
+    const sizeVal = ids.map(id => sizeIds[id]).find(Boolean);
+    const colorVal = ids.map(id => colorIds[id]).find(Boolean);
+    const sizeTitle = sizeVal?.title || 'One Size';
+    const colorTitle = colorVal?.title || null;
+
+    if (Number.isFinite(v.price)) cents.push(v.price);
+    if (!sizes.includes(sizeTitle)) sizes.push(sizeTitle);
+
+    const key = VKEY(colorTitle, sizeTitle);
+    if (!(key in printify_variants)) printify_variants[key] = v.id;
+
+    if (colorTitle) {
+      if (!colorSeen.has(colorTitle)) {
+        colorSeen.add(colorTitle);
+        const hex = Array.isArray(colorVal?.colors) ? colorVal.colors[0] : null;
+        colors.push({ name: colorTitle, hex: hex || null, image: variantImage[v.id] || defaultImg?.src || null });
+      }
+      (matrix[colorTitle] = matrix[colorTitle] || []);
+      if (!matrix[colorTitle].includes(sizeTitle)) matrix[colorTitle].push(sizeTitle);
+    }
+  }
+
   if (sizes.length === 0) {
     sizes.push('One Size');
     if (usable[0]) printify_variants['One Size'] = usable[0].id;
   }
 
   // Lowest enabled price (Printify stores prices in cents).
-  const cents = usable.map(v => v.price).filter(n => Number.isFinite(n));
   const price = cents.length ? Math.min(...cents) / 100 : 0;
 
-  // Prefer the default image, else the first.
-  const img = (p.images || []).find(i => i.is_default) || (p.images || [])[0];
+  // Public, browser-safe option data (no variant ids). Empty when single-colour.
+  const variant_options = colors.length ? { colors, matrix } : {};
 
   return {
     id: String(p.id),
@@ -133,13 +169,14 @@ export function mapPrintifyProduct(p, shopId = printifyShopId()) {
     price,
     stock: 9999, // print-on-demand: effectively unlimited
     description: plainText(p.description),
-    image_url: img?.src || null,
+    image_url: (colors[0]?.image) || defaultImg?.src || null,
     sizes,
     category: inferCategory(p.title),
     printify_product_id: String(p.id),
     printify_shop_id: String(shopId),
     printify_blueprint_id: p.blueprint_id ?? null,
-    printify_variants
+    printify_variants,
+    variant_options
   };
 }
 
@@ -155,7 +192,10 @@ export async function createPrintifyOrder(order, productRows, shopId = printifyS
   for (const it of order.items || []) {
     const row = productRows[it.id];
     if (!row?.printify_product_id) continue;
-    const variantId = row.printify_variants?.[it.size];
+    // Resolve the exact colour+size variant; fall back to size-only for
+    // single-colour products (or older rows synced before colour support).
+    const variantId = row.printify_variants?.[VKEY(it.color, it.size)]
+      ?? row.printify_variants?.[it.size];
     if (!variantId) continue;
     line_items.push({
       product_id: String(row.printify_product_id),

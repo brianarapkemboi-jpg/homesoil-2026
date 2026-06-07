@@ -13,9 +13,10 @@ export default async function handler(req, res) {
   try {
     // Only the public display columns — never expose internal fulfillment
     // mapping (printify_product_id / printify_variants) to the browser.
+    // variant_options is the browser-safe colour/size matrix (no variant ids).
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, price, stock, description, image_url, sizes, category')
+      .select('id, name, price, stock, description, image_url, sizes, category, variant_options')
       .order('created_at', { ascending: true });
     if (error) throw error;
     return res.status(200).json({ products: data });
