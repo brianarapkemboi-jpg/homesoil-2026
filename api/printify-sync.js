@@ -73,7 +73,11 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ ok: true, synced: rows.length, ids: rows.map(r => r.id) });
   } catch (err) {
-    console.error('printify-sync error:', err.message);
-    return res.status(500).json({ ok: false, error: err.message });
+    // Supabase errors carry extra context in details/hint; include it so the
+    // admin toast tells us exactly what failed (column, constraint, etc.).
+    const extra = [err.details, err.hint].filter(Boolean).join(' ');
+    const message = extra ? `${err.message} — ${extra}` : err.message;
+    console.error('printify-sync error:', message, err.code || '');
+    return res.status(500).json({ ok: false, error: message });
   }
 }
