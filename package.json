@@ -2,7 +2,7 @@
   "name": "homesoil-2026",
   "version": "1.0.0",
   "type": "module",
-  "description": "Home Soil 2026 — fan-inspired USA World Cup 2026 print-on-demand store. Static storefront + serverless backend (Stripe payments, Printful fulfillment).",
+  "description": "Home Soil 2026 — fan-inspired USA World Cup 2026 print-on-demand store. Static storefront + serverless backend (Stripe payments, Printify fulfillment + auto product sync).",
   "private": true,
   "scripts": {
     "dev": "vercel dev",

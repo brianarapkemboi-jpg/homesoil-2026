@@ -8,7 +8,8 @@ _Last worked: 2026-06-06. Resume the Claude chat with `claude --resume` in this 
 - The store is **LIVE** (`STORE_CONFIG.backendUrl` + `pk_live` set, so `LIVE_MODE` is on) and taking real payments via the Stripe **Payment Element** (PCI SAQ-A; raw card data never hits the server).
 
 ## ✅ Done & LIVE
-- **Stripe webhook:** customer receipts (card + wallet, email backfill), idempotent finalize (no double-decrement on retries), manual Printful fulfillment (orders rest at `paid`), atomic stock decrement + `oversold_review` flagging.
+- **Stripe webhook:** customer receipts (card + wallet, email backfill), idempotent finalize (no double-decrement on retries), **automated Printify fulfillment** (creates the Printify order on payment → `fulfilling`; `PRINTIFY_AUTO_FULFILL=true` sends to production), atomic stock decrement + `oversold_review` flagging.
+- **Printify product sync:** design in Printify → auto-published to the store. `/api/printify-webhook` (publish/delete events) upserts into Supabase; `/api/printify-sync` does a full pull (admin "🔄 Sync from Printify"); `/api/printify-register-webhooks` sets up the webhooks. See `PRINTIFY-SETUP.md`. Run `supabase-schema.sql` for the new `printify_*` columns.
 - **Refunds sync:** `charge.refunded` event is enabled in Stripe (Workbench, 3 events) and the webhook flips orders to `refunded` / `partial_refund`.
 - **Checkout rate-limiting:** 5 requests/min per IP on `/api/create-payment-intent` (anti-flood / anti-card-testing). Supabase-backed (`rate_limits` table + `check_rate_limit` RPC — **already run in Supabase**), `_lib/ratelimit.js`. Fails open. Verified live (6th request → 429).
 - **HTTP hardening:** API CORS locked to homesoil2026.com + security headers (HSTS, X-Frame-Options, nosniff, Permissions-Policy) in `vercel.json`.
@@ -31,8 +32,7 @@ Backend is written and deployed but inert until `STRIPE_TAX=on`. Live checkout s
 
 ## Operational reminders (manual, your side)
 - **Stripe → Settings → Customer emails → "Successful payments"** must be ON for receipts to send.
-- In admin, fill each product's **Printful variants** field (`S:4567, M:4568, ...`) for manual fulfillment.
-- Seed products in Supabase + build the Printful products with your artwork.
+- Set `PRINTIFY_API_TOKEN` + `PRINTIFY_SHOP_ID` in Vercel, then design products in Printify and **🔄 Sync from Printify** (variant ids auto-fill). Enable auto-publish webhooks once (`PRINTIFY_WEBHOOK_SECRET` recommended).
 - Ad pixels (`metaPixelId`, etc. in `STORE_CONFIG`) are empty — add them before running ads.
 - **Run one end-to-end live test order:** pay → webhook 200 → order `paid` in Supabase → receipt email → stock decrements.
 - Email: ImprovMX forwarding, `support@homesoil2026.com` (live).

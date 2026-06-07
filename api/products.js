@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   try {
     // Only the public display columns — never expose internal fulfillment
-    // mapping (printful_product_id / printful_variant_id) to the browser.
+    // mapping (printify_product_id / printify_variants) to the browser.
     const { data, error } = await supabase
       .from('products')
       .select('id, name, price, stock, description, image_url, sizes, category')
