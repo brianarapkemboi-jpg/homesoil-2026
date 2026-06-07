@@ -26,10 +26,14 @@ Supabase → SQL Editor → run **`worldcup-features-schema.sql`** (safe to re-r
 - **`RESEND_API_KEY`** + **`STORE_FROM_EMAIL`** — so entrants get the welcome + discount email. Without Resend, entries still save; they just don't get an email.
 
 ## 4. Leaderboard scoring
-`/api/score-predictions` recomputes points from finished matches (3 pts per correct outcome). It's wired as a **daily Vercel Cron** in `vercel.json` (`0 7 * * *`).
-- On Vercel **Hobby**, crons run at most once/day (this schedule is fine).
-- Want faster updates during match days? Upgrade to Pro and change the schedule (e.g. `0 * * * *`), or hit `/api/score-predictions` manually.
-- Set **`CRON_SECRET`** to require `Authorization: Bearer <secret>` (Vercel Cron sends this automatically).
+Scoring is **automatic** — no cron required. Whenever `/api/matches` refreshes and
+detects a newly FINISHED match, it recomputes every entrant's points (3 pts per
+correct outcome). Because fans hit the Match Center regularly, the leaderboard
+stays current on its own. (Keeping scoring out of a dedicated function also keeps
+us under the Vercel Hobby 12-function limit.)
+- Manual trigger if you ever want it: `GET /api/predictions?score=1` (add
+  `?key=<CRON_SECRET>` or an `Authorization: Bearer <CRON_SECRET>` header if
+  `CRON_SECRET` is set).
 
 ---
 

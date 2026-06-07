@@ -13,6 +13,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { rateLimit, clientIp } from './_lib/ratelimit.js';
 import { sendEmail, pickemWelcomeHtml } from './_lib/email.js';
+import { scorePredictions } from './_lib/score.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -22,9 +23,21 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // -------- GET: leaderboard or a single entry --------
+  // -------- GET: leaderboard, a single entry, or manual scoring --------
   if (req.method === 'GET') {
     try {
+      // Manual scoring trigger (scoring also runs automatically during a match
+      // refresh). Protected by CRON_SECRET when set.
+      if (req.query?.score) {
+        const secret = process.env.CRON_SECRET;
+        if (secret) {
+          const auth = req.headers['authorization'] || '';
+          const key = req.query?.key || '';
+          if (auth !== `Bearer ${secret}` && key !== secret) return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const result = await scorePredictions(supabase);
+        return res.status(200).json({ ok: true, ...result });
+      }
       if (req.query?.leaderboard) {
         const { data, error } = await supabase
           .from('predictions')

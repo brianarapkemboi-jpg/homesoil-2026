@@ -11,6 +11,7 @@
 // ============================================================
 import { createClient } from '@supabase/supabase-js';
 import { fetchMatches, computeStandings } from './_lib/football.js';
+import { scorePredictions } from './_lib/score.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -37,6 +38,25 @@ async function refreshFromProvider() {
   await markRefreshed();
 }
 
+// Re-score the Pick'em leaderboard, but only when the number of FINISHED matches
+// has changed since we last scored — so we don't re-score on every refresh.
+// This replaces a dedicated cron (keeps us under the Hobby function limit).
+async function maybeScorePredictions() {
+  try {
+    const { count } = await supabase
+      .from('matches').select('id', { count: 'exact', head: true }).eq('status', 'FINISHED');
+    const { data } = await supabase.from('app_state').select('value').eq('key', 'scored_finished_count').maybeSingle();
+    const prev = data?.value != null ? parseInt(data.value, 10) : -1;
+    if ((count || 0) !== prev) {
+      await scorePredictions(supabase);
+      await supabase.from('app_state').upsert(
+        { key: 'scored_finished_count', value: String(count || 0), updated_at: new Date().toISOString() },
+        { onConflict: 'key' }
+      );
+    }
+  } catch (e) { console.error('auto-score skipped:', e.message); }
+}
+
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -47,7 +67,7 @@ export default async function handler(req, res) {
     if (force || age > FRESH_SECONDS) {
       // Best-effort: if the refresh fails (no token / rate limited), fall back to
       // whatever is cached so the page still renders.
-      try { await refreshFromProvider(); }
+      try { await refreshFromProvider(); await maybeScorePredictions(); }
       catch (e) { console.error('matches refresh skipped:', e.message); }
     }
 
