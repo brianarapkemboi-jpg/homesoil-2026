@@ -160,6 +160,16 @@
     .thumb:hover { border-color:#9ca3af; }
     .thumb.active { border-color:var(--navy); box-shadow:0 0 0 1px var(--navy); }
 
+    /* Pick'em outcome buttons */
+    .pick-btn {
+      border:1px solid #d1d5db; border-radius:6px; padding:6px 4px; background:#fff;
+      font-size:.72rem; font-weight:700; cursor:pointer; color:#374151;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      transition: background 100ms, border-color 100ms, color 100ms;
+    }
+    .pick-btn:hover { border-color:var(--navy); }
+    .pick-btn.active { background:var(--navy); border-color:var(--navy); color:#fff; }
+
     .btn-quick-add {
       background:var(--navy); color:#fff; border:none; border-radius:8px;
       padding:10px 16px; font-size:.85rem; font-weight:700; cursor:pointer;
@@ -327,6 +337,9 @@
     <a href="#" class="font-display text-white font-black text-2xl tracking-tight">HOME SOIL <span class="text-red-400" style="color:#e05c6e">2026</span></a>
     <div class="flex items-center gap-3">
       <a href="#products" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Shop</a>
+      <a href="#matches" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Scores</a>
+      <a href="#pickem" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Pick'em</a>
+      <a href="#stadiums" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Stadiums</a>
       <button onclick="openCart()" class="relative text-white p-2 hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors" aria-label="Open cart">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style="background:var(--red); display:none;">0</span>
@@ -386,6 +399,19 @@
 </div>
 
 <!-- ====================================================
+     GAME-DAY DROP BANNER (next match + countdown → shop)
+     Populated by renderGamedayBanner(); hidden until match data loads.
+     ==================================================== -->
+<a href="#products" id="gameday-banner" style="display:none;" class="block text-white text-center py-3 px-4 hover:opacity-95 transition-opacity" >
+  <div class="max-w-5xl mx-auto flex items-center justify-center gap-x-4 gap-y-1 flex-wrap text-sm font-semibold">
+    <span class="uppercase tracking-widest text-yellow-300 font-black">⚽ Next Match</span>
+    <span id="gameday-teams"></span>
+    <span id="gameday-countdown" class="font-mono bg-white bg-opacity-15 rounded px-2 py-0.5" style="background:rgba(255,255,255,0.15);"></span>
+    <span class="underline">Shop the matchday collection →</span>
+  </div>
+</a>
+
+<!-- ====================================================
      SECTION 3: FEATURED PRODUCTS
      ==================================================== -->
 <section id="products" class="py-16 bg-cream px-4">
@@ -410,6 +436,76 @@
     </style>
 
     <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"></div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 4A: MATCH CENTER (live scores / schedule / standings)
+     ==================================================== -->
+<section id="matches" class="py-16 px-4" style="background:#fff;">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-8">
+      <h2 class="font-display font-black text-navy uppercase text-5xl mb-2">Match Center</h2>
+      <p class="text-gray-500 text-base">Live scores, the full schedule, and group standings — World Cup 2026.</p>
+    </div>
+    <div class="flex gap-2 justify-center flex-wrap mb-6">
+      <button class="filter-btn active-filter" data-mf="upcoming" onclick="setMatchFilter('upcoming', this)">Upcoming</button>
+      <button class="filter-btn" data-mf="live" onclick="setMatchFilter('live', this)">🔴 Live</button>
+      <button class="filter-btn" data-mf="results" onclick="setMatchFilter('results', this)">Results</button>
+      <button class="filter-btn" data-mf="all" onclick="setMatchFilter('all', this)">All</button>
+    </div>
+    <div id="match-list" class="space-y-2 max-w-2xl mx-auto"></div>
+
+    <h3 class="font-display font-black text-navy uppercase text-3xl text-center mt-14 mb-6" id="standings-title" style="display:none;">Group Standings</h3>
+    <div id="standings-grid" class="grid md:grid-cols-2 gap-6"></div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 4B: PICK'EM CHALLENGE + LEADERBOARD
+     ==================================================== -->
+<section id="pickem" class="py-16 px-4" style="background:var(--navy);">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-8">
+      <span class="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-1 block">Free to play</span>
+      <h2 class="font-display font-black text-white uppercase text-5xl mb-2">Pick'em Challenge</h2>
+      <p class="text-white text-opacity-70" style="color:rgba(255,255,255,0.7);">Predict the matches, climb the leaderboard. Top scorer wins free gear — and everyone who enters gets a discount.</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-8 items-start">
+      <!-- Entry form -->
+      <div class="bg-white rounded-2xl p-6">
+        <h3 class="font-bold text-navy text-lg mb-3">Make your picks</h3>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <input id="pick-name" class="form-input text-sm" placeholder="Display name" maxlength="40" />
+          <input id="pick-email" type="email" class="form-input text-sm" placeholder="Email" />
+        </div>
+        <div id="pickem-matches" class="space-y-2 max-h-80 overflow-y-auto pr-1 mb-4"></div>
+        <label class="flex items-start gap-2 text-xs text-gray-500 mb-3">
+          <input type="checkbox" id="pick-optin" class="mt-0.5" />
+          <span>Email me my discount code, match reminders &amp; drops. (You can unsubscribe anytime.)</span>
+        </label>
+        <button onclick="submitPicks()" id="pick-submit" class="btn-primary w-full font-black">Lock in my picks</button>
+        <p id="pick-status" class="text-sm text-center mt-3" style="display:none;"></p>
+      </div>
+      <!-- Leaderboard -->
+      <div class="bg-white bg-opacity-10 rounded-2xl p-6" style="background:rgba(255,255,255,0.08);">
+        <h3 class="font-bold text-white text-lg mb-4">🏆 Leaderboard</h3>
+        <div id="leaderboard" class="space-y-1"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION 4C: STADIUM GUIDE (16 host venues)
+     ==================================================== -->
+<section id="stadiums" class="py-16 bg-cream px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-8">
+      <h2 class="font-display font-black text-navy uppercase text-5xl mb-2">Host Stadiums</h2>
+      <p class="text-gray-500 text-base">16 venues across the USA, Canada &amp; Mexico for World Cup 2026.</p>
+    </div>
+    <div id="stadium-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
   </div>
 </section>
 
@@ -800,6 +896,16 @@
                 <input type="text" id="f-cvv" class="form-input" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc" />
               </div>
             </div>
+          </div>
+
+          <!-- Promo code (e.g. from the Pick'em welcome email) -->
+          <div class="mb-4">
+            <label class="form-label">Promo code</label>
+            <div class="flex gap-2">
+              <input type="text" id="f-promo" class="form-input" placeholder="Have a code?" autocomplete="off" />
+              <button type="button" onclick="applyPromo()" class="bg-navy text-white text-sm font-bold px-4 rounded-lg hover:bg-blue-900 transition-colors whitespace-nowrap">Apply</button>
+            </div>
+            <p id="promo-msg" class="text-xs mt-1" style="display:none;"></p>
           </div>
 
           <!-- Trust signals immediately next to Pay button — research shows +18% completion -->
@@ -1470,11 +1576,36 @@ async function initStripeCheckout() {
     stripePaymentEl = stripeElements.create('payment', { layout: 'tabs' });
     stripePaymentEl.mount('#payment-element');
 
-    setPayBtn('Place Order — <span id="checkout-total-btn">$' + cartGrandTotal().toFixed(2) + '</span>', false);
+    const shownTotal = (typeof data.amount === 'number') ? data.amount : cartGrandTotal();
+    setPayBtn('Place Order — <span id="checkout-total-btn">$' + shownTotal.toFixed(2) + '</span>', false);
+    showPromoResult(data);
   } catch (e) {
     console.error(e);
     if (err) err.textContent = e.message;
     setPayBtn('Place Order — <span id="checkout-total-btn">$' + cartGrandTotal().toFixed(2) + '</span>', false);
+  }
+}
+
+// Apply a promo code: store it and rebuild the PaymentIntent so the server
+// re-prices with the discount (prices are always authoritative server-side).
+let appliedPromo = '';
+function applyPromo() {
+  appliedPromo = (document.getElementById('f-promo').value || '').trim();
+  const msg = document.getElementById('promo-msg');
+  if (msg) { msg.style.display = 'block'; msg.style.color = '#6b7280'; msg.textContent = 'Applying…'; }
+  initStripeCheckout();
+}
+function showPromoResult(data) {
+  const msg = document.getElementById('promo-msg');
+  if (!msg) return;
+  if (!appliedPromo) { msg.style.display = 'none'; return; }
+  msg.style.display = 'block';
+  if (data && data.promoApplied) {
+    msg.style.color = '#16a34a';
+    msg.textContent = `✅ ${data.discountPct}% off applied — you saved $${Number(data.discount).toFixed(2)}.`;
+  } else {
+    msg.style.color = '#dc2626';
+    msg.textContent = 'That code isn’t valid.';
   }
 }
 
@@ -1605,6 +1736,7 @@ function buildOrderPayload(email, method) {
   return {
     email: email,
     paymentMethod: method,
+    promoCode: appliedPromo || undefined,
     customer: {
       name: (document.getElementById('f-name').value || '').trim(),
       address: (document.getElementById('f-address').value || '').trim(),
@@ -2291,6 +2423,245 @@ function closeLegal() {
 }
 
 // ===================================================
+// FAN ENGAGEMENT: Match Center · Pick'em · Stadiums · Game-day
+// ===================================================
+let MATCH_DATA = { matches: [], standings: {} };
+let matchFilter = 'upcoming';
+let pickemSelections = {};   // matchId -> 'HOME_TEAM' | 'DRAW' | 'AWAY_TEAM'
+
+// The 16 confirmed host venues (static — no API needed).
+const STADIUMS = [
+  { city: 'New York / New Jersey', country: '🇺🇸', name: 'MetLife Stadium', cap: '82,500', note: 'Hosts the Final' },
+  { city: 'Mexico City', country: '🇲🇽', name: 'Estadio Azteca', cap: '83,200', note: 'Hosts the Opening Match' },
+  { city: 'Los Angeles', country: '🇺🇸', name: 'SoFi Stadium', cap: '70,000', note: 'Inglewood, CA' },
+  { city: 'Dallas', country: '🇺🇸', name: 'AT&T Stadium', cap: '80,000', note: 'Arlington, TX' },
+  { city: 'Atlanta', country: '🇺🇸', name: 'Mercedes-Benz Stadium', cap: '71,000', note: 'Retractable roof' },
+  { city: 'Houston', country: '🇺🇸', name: 'NRG Stadium', cap: '72,000', note: 'Texas' },
+  { city: 'Kansas City', country: '🇺🇸', name: 'Arrowhead Stadium', cap: '76,000', note: 'Missouri' },
+  { city: 'Miami', country: '🇺🇸', name: 'Hard Rock Stadium', cap: '65,000', note: 'Miami Gardens, FL' },
+  { city: 'Philadelphia', country: '🇺🇸', name: 'Lincoln Financial Field', cap: '69,000', note: 'Pennsylvania' },
+  { city: 'San Francisco Bay Area', country: '🇺🇸', name: "Levi's Stadium", cap: '68,500', note: 'Santa Clara, CA' },
+  { city: 'Seattle', country: '🇺🇸', name: 'Lumen Field', cap: '69,000', note: 'Washington' },
+  { city: 'Boston', country: '🇺🇸', name: 'Gillette Stadium', cap: '65,000', note: 'Foxborough, MA' },
+  { city: 'Toronto', country: '🇨🇦', name: 'BMO Field', cap: '45,000', note: 'Ontario' },
+  { city: 'Vancouver', country: '🇨🇦', name: 'BC Place', cap: '54,500', note: 'British Columbia' },
+  { city: 'Guadalajara', country: '🇲🇽', name: 'Estadio Akron', cap: '48,000', note: 'Jalisco' },
+  { city: 'Monterrey', country: '🇲🇽', name: 'Estadio BBVA', cap: '53,500', note: 'Nuevo León' }
+];
+
+function renderStadiums() {
+  const grid = document.getElementById('stadium-grid');
+  if (!grid) return;
+  grid.innerHTML = STADIUMS.map(s => `
+    <div class="bg-white rounded-xl p-5 shadow-sm">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-2xl">${s.country}</span>
+        <span class="text-xs font-bold text-gray-400">${escapeHtml(s.cap)} seats</span>
+      </div>
+      <p class="font-display font-black text-navy text-xl leading-tight">${escapeHtml(s.city)}</p>
+      <p class="text-sm font-semibold text-gray-700">${escapeHtml(s.name)}</p>
+      <p class="text-xs text-gray-400 mt-1">${escapeHtml(s.note)}</p>
+    </div>`).join('');
+}
+
+async function loadMatchCenter() {
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/matches');
+    if (res.ok) {
+      const data = await res.json();
+      MATCH_DATA = { matches: data.matches || [], standings: data.standings || {} };
+    }
+  } catch (e) { /* keep whatever we have */ }
+  renderMatches();
+  renderStandings();
+  renderPickemMatches();
+  renderGamedayBanner();
+}
+
+function setMatchFilter(f, btn) {
+  matchFilter = f;
+  document.querySelectorAll('#matches [data-mf]').forEach(b => b.classList.remove('active-filter'));
+  if (btn) btn.classList.add('active-filter');
+  renderMatches();
+}
+
+function fmtKickoff(utc) {
+  if (!utc) return 'TBD';
+  const d = new Date(utc);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' +
+         d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+function teamLabel(name, code, flag) {
+  const f = flag ? `<img src="${escapeHtml(flag)}" alt="" class="inline-block w-5 h-4 object-cover rounded-sm mr-1 align-middle" loading="lazy"/>` : '';
+  return `${f}<span class="align-middle">${escapeHtml(name || 'TBD')}</span>${code ? ` <span class="text-gray-400 text-xs">${escapeHtml(code)}</span>` : ''}`;
+}
+
+function renderMatches() {
+  const el = document.getElementById('match-list');
+  if (!el) return;
+  let list = MATCH_DATA.matches.slice();
+  const live = m => ['IN_PLAY', 'PAUSED'].includes(m.status);
+  if (matchFilter === 'upcoming') list = list.filter(m => ['SCHEDULED', 'TIMED'].includes(m.status));
+  else if (matchFilter === 'live') list = list.filter(live);
+  else if (matchFilter === 'results') list = list.filter(m => m.status === 'FINISHED').reverse();
+  if (matchFilter === 'upcoming') list = list.slice(0, 24);
+
+  if (list.length === 0) {
+    el.innerHTML = `<p class="text-center text-gray-400 py-8">${MATCH_DATA.matches.length ? 'Nothing here right now — try another tab.' : 'Schedule loads here once the season feed is connected.'}</p>`;
+    return;
+  }
+  el.innerHTML = list.map(m => {
+    const isLive = live(m);
+    const done = m.status === 'FINISHED';
+    const score = (m.home_score != null && m.away_score != null) ? `${m.home_score} – ${m.away_score}` : 'vs';
+    const badge = isLive ? `<span class="text-xs font-black text-red-600">🔴 LIVE</span>`
+      : done ? `<span class="text-xs font-bold text-gray-400">FT</span>`
+      : `<span class="text-xs text-gray-400">${fmtKickoff(m.utc_date)}</span>`;
+    return `
+    <div class="flex items-center justify-between gap-3 bg-white border border-gray-100 rounded-lg px-4 py-3">
+      <div class="flex-1 min-w-0 text-sm">
+        <div class="flex items-center justify-between gap-2">
+          <span>${teamLabel(m.home, m.home_code, m.home_flag)}</span>
+          <span class="font-black text-navy ${isLive?'text-red-600':''}">${done||isLive?score.split(' – ')[0]:''}</span>
+        </div>
+        <div class="flex items-center justify-between gap-2 mt-1">
+          <span>${teamLabel(m.away, m.away_code, m.away_flag)}</span>
+          <span class="font-black text-navy ${isLive?'text-red-600':''}">${done||isLive?score.split(' – ')[1]:''}</span>
+        </div>
+      </div>
+      <div class="text-right flex-shrink-0 w-20">
+        ${badge}
+        <div class="text-[10px] text-gray-400 mt-1">${escapeHtml(m.group_name || (m.stage||'').replace(/_/g,' '))}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStandings() {
+  const grid = document.getElementById('standings-grid');
+  const title = document.getElementById('standings-title');
+  if (!grid) return;
+  const groups = Object.keys(MATCH_DATA.standings || {});
+  if (groups.length === 0) { grid.innerHTML = ''; if (title) title.style.display = 'none'; return; }
+  if (title) title.style.display = '';
+  grid.innerHTML = groups.map(g => `
+    <div class="bg-white border border-gray-100 rounded-xl p-4">
+      <p class="font-bold text-navy mb-2">${escapeHtml(g)}</p>
+      <table class="w-full text-xs">
+        <thead><tr class="text-gray-400 text-left"><th class="font-semibold py-1">Team</th><th class="font-semibold text-center">P</th><th class="font-semibold text-center">GD</th><th class="font-semibold text-center">Pts</th></tr></thead>
+        <tbody>
+          ${MATCH_DATA.standings[g].map((t, i) => `
+            <tr class="${i < 2 ? 'font-bold text-navy' : 'text-gray-600'}">
+              <td class="py-1">${teamLabel(t.team, t.code, t.flag)}</td>
+              <td class="text-center">${t.played}</td>
+              <td class="text-center">${t.gd > 0 ? '+' : ''}${t.gd}</td>
+              <td class="text-center">${t.points}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`).join('');
+}
+
+// ---- Game-day banner: soonest upcoming match (prefers USA) ----
+let gamedayTarget = null, gamedayTimer = null;
+function renderGamedayBanner() {
+  const banner = document.getElementById('gameday-banner');
+  if (!banner) return;
+  const upcoming = MATCH_DATA.matches
+    .filter(m => ['SCHEDULED', 'TIMED'].includes(m.status) && m.utc_date && new Date(m.utc_date) > new Date())
+    .sort((a, b) => new Date(a.utc_date) - new Date(b.utc_date));
+  if (upcoming.length === 0) { banner.style.display = 'none'; return; }
+  const usa = upcoming.find(m => m.home_code === 'USA' || m.away_code === 'USA');
+  const m = usa || upcoming[0];
+  gamedayTarget = new Date(m.utc_date).getTime();
+  document.getElementById('gameday-teams').textContent = `${m.home} vs ${m.away}`;
+  banner.style.background = 'linear-gradient(90deg, var(--navy), var(--red))';
+  banner.style.display = 'block';
+  if (gamedayTimer) clearInterval(gamedayTimer);
+  tickGameday(); gamedayTimer = setInterval(tickGameday, 1000);
+}
+function tickGameday() {
+  const out = document.getElementById('gameday-countdown');
+  if (!out || !gamedayTarget) return;
+  let s = Math.floor((gamedayTarget - Date.now()) / 1000);
+  if (s <= 0) { out.textContent = 'KICKOFF!'; return; }
+  const d = Math.floor(s/86400); s -= d*86400;
+  const h = Math.floor(s/3600); s -= h*3600;
+  const mn = Math.floor(s/60); const sec = s - mn*60;
+  out.textContent = (d>0?`${d}d `:'') + `${h}h ${mn}m ${String(sec).padStart(2,'0')}s`;
+}
+
+// ---- Pick'em ----
+function renderPickemMatches() {
+  const el = document.getElementById('pickem-matches');
+  if (!el) return;
+  const open = MATCH_DATA.matches
+    .filter(m => ['SCHEDULED', 'TIMED'].includes(m.status) && m.home !== 'TBD' && m.away !== 'TBD')
+    .slice(0, 15);
+  if (open.length === 0) {
+    el.innerHTML = `<p class="text-sm text-gray-400 py-4 text-center">Upcoming matches to predict will appear here once the schedule is connected.</p>`;
+    return;
+  }
+  el.innerHTML = open.map(m => `
+    <div class="border border-gray-100 rounded-lg p-2">
+      <p class="text-[11px] text-gray-400 mb-1">${escapeHtml(m.group_name || (m.stage||'').replace(/_/g,' '))} · ${fmtKickoff(m.utc_date)}</p>
+      <div class="grid grid-cols-3 gap-1">
+        <button class="pick-btn" data-m="${escapeHtml(m.id)}" data-v="HOME_TEAM" onclick="selectPick('${escapeHtml(m.id)}','HOME_TEAM',this)">${escapeHtml(m.home_code || m.home)}</button>
+        <button class="pick-btn" data-m="${escapeHtml(m.id)}" data-v="DRAW" onclick="selectPick('${escapeHtml(m.id)}','DRAW',this)">Draw</button>
+        <button class="pick-btn" data-m="${escapeHtml(m.id)}" data-v="AWAY_TEAM" onclick="selectPick('${escapeHtml(m.id)}','AWAY_TEAM',this)">${escapeHtml(m.away_code || m.away)}</button>
+      </div>
+    </div>`).join('');
+}
+function selectPick(matchId, val, btn) {
+  pickemSelections[matchId] = val;
+  const row = btn.parentElement;
+  row.querySelectorAll('.pick-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+async function submitPicks() {
+  const name = (document.getElementById('pick-name').value || '').trim();
+  const email = (document.getElementById('pick-email').value || '').trim();
+  const status = document.getElementById('pick-status');
+  const btn = document.getElementById('pick-submit');
+  const show = (msg, ok) => { status.style.display = 'block'; status.textContent = msg; status.style.color = ok ? '#16a34a' : '#dc2626'; };
+  if (!name) return show('Enter a display name.', false);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return show('Enter a valid email.', false);
+  if (Object.keys(pickemSelections).length === 0) return show('Make at least one pick.', false);
+  const original = btn.innerHTML; btn.innerHTML = 'Saving…'; btn.disabled = true;
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/predictions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, picks: pickemSelections, marketingOptIn: document.getElementById('pick-optin').checked })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not save picks');
+    const codeMsg = data.promoCode ? ` Use code ${data.promoCode} for ${data.promoPercent}% off your gear!` : '';
+    show(`✅ Locked in ${data.picks} pick(s)!${codeMsg}`, true);
+    trackEvent('Lead', { content_name: 'pickem_entry' });
+    loadLeaderboard();
+  } catch (e) {
+    show(e.message, false);
+  } finally {
+    btn.innerHTML = original; btn.disabled = false;
+  }
+}
+async function loadLeaderboard() {
+  const el = document.getElementById('leaderboard');
+  if (!el) return;
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/predictions?leaderboard=1');
+    const data = await res.json().catch(() => ({}));
+    const rows = data.leaderboard || [];
+    if (rows.length === 0) { el.innerHTML = `<p class="text-white text-opacity-60 text-sm" style="color:rgba(255,255,255,0.6);">Be the first to enter!</p>`; return; }
+    el.innerHTML = rows.map((r, i) => `
+      <div class="flex items-center justify-between text-white py-1.5 border-b border-white border-opacity-10" style="border-color:rgba(255,255,255,0.1);">
+        <span class="text-sm">${i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="text-white text-opacity-50" style="color:rgba(255,255,255,0.5);">${i+1}.</span>`} ${escapeHtml(r.display_name)}</span>
+        <span class="font-black text-yellow-400">${r.points} pts</span>
+      </div>`).join('');
+  } catch (e) { /* leave empty */ }
+}
+
+// ===================================================
 // INIT
 // ===================================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -2298,6 +2669,9 @@ document.addEventListener('DOMContentLoaded', function() {
   loadStripeIfLive();    // load Stripe.js if live payments configured
   renderProducts();           // paint the loading state (no hardcoded catalog)
   loadProductsFromDB();        // then load the live Supabase catalog and re-render
+  renderStadiums();            // static host-venue guide
+  loadMatchCenter();           // schedule / scores / standings + game-day banner + pick'em
+  loadLeaderboard();           // pick'em leaderboard
   updateCartUI();
   updateCountdown();
   setInterval(updateCountdown, 1000);
