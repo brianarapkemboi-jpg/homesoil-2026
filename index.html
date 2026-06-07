@@ -1078,118 +1078,14 @@ function escapeHtml(s) {
 // All artwork is fan-inspired original work.
 // Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer.
 // ===================================================
-const PRODUCTS = [
-  {
-    id: 'hs-tee-001',
-    name: 'Home Soil Premium Tee',
-    price: 34,
-    stock: 42,
-    description: 'Heavyweight 100% cotton. Fan-inspired "Home Soil 2026" graphic on chest. Unisex fit, preshrunk.',
-    // IMAGE: Higgsfield/Midjourney — Athletic man mid-30s wearing bold red graphic tee at outdoor watch party, golden evening light, crowd blurred behind, candid energy, 85mm f/1.8
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
-    sizes: ['XS','S','M','L','XL','2XL','3XL'],
-    category: 'tees'
-  },
-  {
-    id: 'hs-tee-002',
-    name: '"Stars & Stripes" Graphic Tee',
-    price: 32,
-    stock: 8,
-    description: 'Stars, stripes, and soccer energy. Soft ring-spun cotton, slim fit. Fan-inspired original artwork.',
-    // IMAGE: Higgsfield/Midjourney — Young woman laughing at tailgate, wearing white graphic tee with bold American design, warm bokeh background of tailgate setup, natural light
-    image: 'https://images.unsplash.com/photo-1503341733017-1901578f9f1e?w=600&q=80',
-    sizes: ['XS','S','M','L','XL','2XL'],
-    category: 'tees'
-  },
-  {
-    id: 'hs-hoodie-001',
-    name: 'Home Soil Fleece Hoodie',
-    price: 64,
-    stock: 23,
-    description: '12 oz. premium fleece. Kangaroo pocket, drawstring hood. Bold chest graphic. Washed navy.',
-    // IMAGE: Higgsfield/Midjourney — Man in navy hoodie standing outside stadium at dusk, stadium lights beginning to glow, fan scarf around neck, cinematic wide shot, cool blue tones
-    image: 'https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600&q=80',
-    sizes: ['XS','S','M','L','XL','2XL','3XL','4XL'],
-    category: 'hoodies'
-  },
-  {
-    id: 'hs-hoodie-002',
-    name: '"We Are Home" Pullover',
-    price: 68,
-    stock: 15,
-    description: 'Ultra-soft pullover hoodie. Large back graphic, subtle front logo. Perfect for the stadium or the street.',
-    // IMAGE: Higgsfield/Midjourney — Group of friends in matching hoodies at watch party bar, hands raised mid-cheer, big screen in background, motion blur on crowd, joyful energy, 24mm wide angle
-    image: 'https://images.unsplash.com/photo-1445106577-23aa32fffcec?w=600&q=80',
-    sizes: ['S','M','L','XL','2XL','3XL'],
-    category: 'hoodies'
-  },
-  {
-    id: 'hs-hat-001',
-    name: 'Stars & Stripes Snapback',
-    price: 28,
-    stock: 34,
-    description: 'Structured 6-panel snapback. Embroidered stars & 2026 on front panel. One size, adjustable.',
-    // IMAGE: Higgsfield/Midjourney — Close-up of man wearing red/white/navy snapback, slight tilt, street style, shallow depth of field, stadium in background soft-focus, golden hour
-    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
-    sizes: ['One Size'],
-    category: 'hats'
-  },
-  {
-    id: 'hs-hat-002',
-    name: 'Home Soil Dad Hat',
-    price: 24,
-    stock: 29,
-    description: 'Unstructured low-profile cap. Vintage wash. Embroidered script logo. Adjustable strap.',
-    // IMAGE: Higgsfield/Midjourney — Young woman wearing vintage washed dad hat, outdoor rooftop bar, summer vibes, sunset in background, casual fan energy, lifestyle photo
-    image: 'https://images.unsplash.com/photo-1570540073428-dfd5bcd34b06?w=600&q=80',
-    sizes: ['One Size'],
-    category: 'hats'
-  },
-  {
-    id: 'hs-scarf-001',
-    name: 'Red/White/Blue Fan Scarf',
-    price: 22,
-    stock: 45,
-    description: 'Woven jacquard supporter scarf. Classic fan scarf format. Machine washable. 100% acrylic.',
-    // IMAGE: Higgsfield/Midjourney — Two fans holding woven scarf overhead in stadium stands, red white blue colors prominent, crowd energy behind them, match day atmosphere
-    image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&q=80',
-    sizes: ['One Size'],
-    category: 'accessories'
-  },
-  {
-    id: 'hs-pin-001',
-    name: 'Limited Edition 2026 Enamel Pin',
-    price: 12,
-    stock: 6,
-    description: 'Hard enamel, 1.5" diameter. Gold metal base. Rubber clutch back. Limited run of 500.',
-    // IMAGE: Higgsfield/Midjourney — Premium product flat lay, enamel pin on denim jacket pocket, white marble surface accent, soft studio lighting, close-up macro lens, clean and premium feel
-    image: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=600&q=80',
-    sizes: ['One Size'],
-    category: 'accessories'
-  },
-  {
-    id: 'hs-tee-003',
-    name: '"Pitch Perfect" Vintage Tee',
-    price: 36,
-    stock: 19,
-    description: 'Garment-dyed vintage wash tee. Distressed "1994 → 2026" call-back graphic. Oversized fit.',
-    // IMAGE: Higgsfield/Midjourney — Person wearing oversized vintage wash tee, relaxed pose, brick wall background, golden afternoon light, Americana street style, editorial photo
-    image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80',
-    sizes: ['S','M','L','XL','2XL'],
-    category: 'tees'
-  },
-  {
-    id: 'hs-pin-002',
-    name: 'Soccer Star Enamel Pin Set (3-pack)',
-    price: 30,
-    stock: 11,
-    description: 'Three collectible hard enamel pins: Soccer Ball, Boot, and Trophy. Gift-boxed.',
-    // IMAGE: Higgsfield/Midjourney — Flat lay of three colorful enamel pins on white card backing, gift box nearby, product photography, clean studio lighting, premium packaging
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-    sizes: ['One Size'],
-    category: 'accessories'
-  }
-];
+// The catalog is loaded live from Supabase (the Printify sync is the source of
+// truth). We intentionally DO NOT ship a hardcoded fallback catalog: doing so
+// made deleted/stale products flash on screen for a moment on every page load
+// before the live catalog replaced them. Until the fetch returns, the grid shows
+// a loading state (see renderProducts); after it returns it shows exactly what's
+// in Supabase — so anything you delete in the admin disappears cleanly.
+const PRODUCTS = [];
+let productsLoaded = false;
 
 // ===================================================
 // CART STATE
@@ -1298,28 +1194,45 @@ function updateCartUI() {
 async function loadProductsFromDB() {
   try {
     const res = await fetch(STORE_CONFIG.backendUrl + '/api/products');
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.products || !data.products.length) return;
-    // Replace the in-memory catalog with the database rows (map image_url -> image).
-    PRODUCTS.length = 0;
-    data.products.forEach(p => PRODUCTS.push({
-      id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
-      description: p.description || '', image: p.image_url || '',
-      sizes: p.sizes || [], category: p.category || 'tees',
-      colors: (p.variant_options && p.variant_options.colors) || [],
-      colorMatrix: (p.variant_options && p.variant_options.matrix) || {},
-      gallery: (p.variant_options && p.variant_options.gallery) || []
-    }));
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.products)) {
+        // Replace the in-memory catalog with the database rows (image_url -> image).
+        PRODUCTS.length = 0;
+        data.products.forEach(p => PRODUCTS.push({
+          id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
+          description: p.description || '', image: p.image_url || '',
+          sizes: p.sizes || [], category: p.category || 'tees',
+          colors: (p.variant_options && p.variant_options.colors) || [],
+          colorMatrix: (p.variant_options && p.variant_options.matrix) || {},
+          gallery: (p.variant_options && p.variant_options.gallery) || []
+        }));
+      }
+    }
+  } catch (e) {
+    /* offline / API down — fall through and render whatever we have */
+  } finally {
+    // Mark loaded (success, empty, or error) so the grid swaps the "Loading…"
+    // note for the real catalog (or an honest "no products" message).
+    productsLoaded = true;
     renderProducts();
     preloadProductImages();
     if (document.getElementById('ad-product-select')) populateAdProductSelect();
-  } catch (e) { /* offline / API down — keep the fallback catalog */ }
+  }
 }
 
 function renderProducts(filter = 'all') {
   const grid = document.getElementById('product-grid');
   const filtered = filter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.category === filter);
+
+  // Before the live catalog loads, show a loading note rather than a stale/empty
+  // grid. After it loads, an empty result means there genuinely are no products.
+  if (filtered.length === 0) {
+    grid.innerHTML = `<p class="col-span-full text-center text-gray-400 py-12">${
+      productsLoaded ? 'No products available right now — check back soon.' : 'Loading products…'
+    }</p>`;
+    return;
+  }
 
   grid.innerHTML = filtered.map(p => {
     const isLow = p.stock <= 10;
@@ -1485,10 +1398,13 @@ function filterProducts(filter, btn) {
 // BUNDLES
 // ===================================================
 function addBundle(bundleId) {
+  // Use a product image as the bundle thumbnail when available (the catalog is
+  // loaded async now, so guard against it being empty).
+  const bundleImg = (PRODUCTS[0] && PRODUCTS[0].image) || '';
   if (bundleId === 'fan-pack') {
-    cart.push({ key: 'bundle-fan-pack', productId: 'bundle', name: 'USA Fan Pack Bundle', price: 54, size: 'Bundle', qty: 1, image: PRODUCTS[0].image });
+    cart.push({ key: 'bundle-fan-pack', productId: 'bundle', name: 'USA Fan Pack Bundle', price: 54, size: 'Bundle', qty: 1, image: bundleImg });
   } else if (bundleId === 'watch-party') {
-    cart.push({ key: 'bundle-watch-party', productId: 'bundle', name: 'Watch Party Kit Bundle', price: 72, size: 'Bundle', qty: 1, image: PRODUCTS[2].image });
+    cart.push({ key: 'bundle-watch-party', productId: 'bundle', name: 'Watch Party Kit Bundle', price: 72, size: 'Bundle', qty: 1, image: ((PRODUCTS[2] || PRODUCTS[0]) && (PRODUCTS[2] || PRODUCTS[0]).image) || '' });
   }
   saveCart();
   showToast('Bundle added to cart!');
@@ -2467,8 +2383,8 @@ function closeLegal() {
 document.addEventListener('DOMContentLoaded', function() {
   initConsentAndPixels();  // load ad pixels only after consent (if IDs configured)
   loadStripeIfLive();    // load Stripe.js if live payments configured
-  renderProducts();           // instant first paint from the fallback catalog
-  loadProductsFromDB();        // then sync to the live Supabase catalog
+  renderProducts();           // paint the loading state (no hardcoded catalog)
+  loadProductsFromDB();        // then load the live Supabase catalog and re-render
   updateCartUI();
   updateCountdown();
   setInterval(updateCountdown, 1000);
