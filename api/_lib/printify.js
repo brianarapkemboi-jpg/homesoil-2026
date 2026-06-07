@@ -34,9 +34,13 @@ async function printifyFetch(path, options = {}) {
   });
   // Some Printify endpoints (publishing callbacks) return an empty body on 200.
   const text = await res.text();
-  const json = text ? JSON.parse(text) : {};
+  let json = {};
+  try { json = text ? JSON.parse(text) : {}; } catch { json = { message: text }; }
   if (!res.ok) {
-    throw new Error(json.message || json.error || `Printify ${res.status}`);
+    let msg = json.message || json.error || `Printify ${res.status}`;
+    // Printify validation errors carry the useful detail in `errors`.
+    if (json.errors) { try { msg += ': ' + JSON.stringify(json.errors); } catch {} }
+    throw new Error(msg);
   }
   return json;
 }
@@ -49,15 +53,17 @@ export async function listShops() {
 }
 
 // Pull EVERY product in the shop, following pagination.
+// Printify's products endpoint caps `limit` at 50 — passing more returns a
+// "Validation failed" error — so page through in chunks of 50.
 export async function fetchAllProducts(shopId = printifyShopId()) {
+  const LIMIT = 50;
   const all = [];
   let page = 1;
-  // Printify caps limit at 100; loop until a short/empty page.
   for (;;) {
-    const res = await printifyFetch(`/shops/${shopId}/products.json?page=${page}&limit=100`);
+    const res = await printifyFetch(`/shops/${shopId}/products.json?page=${page}&limit=${LIMIT}`);
     const batch = Array.isArray(res.data) ? res.data : [];
     all.push(...batch);
-    if (batch.length < 100) break;
+    if (batch.length < LIMIT) break;
     page += 1;
     if (page > 100) break; // safety valve
   }
