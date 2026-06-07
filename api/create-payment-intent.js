@@ -8,6 +8,7 @@
 // ============================================================
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { rateLimit, clientIp } from './_lib/ratelimit.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -19,6 +20,16 @@ const TAX_RATE = 0.08;
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Rate-limit checkout creation per IP, durably across serverless instances.
+  // Stops PaymentIntent flooding / card-testing from spamming Stripe and the
+  // orders table. Runs before any DB write so blocked requests create nothing.
+  // Fails open (see _lib/ratelimit.js) so a limiter hiccup never blocks a sale.
+  const ip = clientIp(req);
+  const { allowed } = await rateLimit(`cpi:${ip}`, 5, 60);  // 5 per minute / IP
+  if (!allowed) {
+    return res.status(429).json({ error: 'Too many checkout attempts. Please wait a minute and try again.' });
+  }
 
   try {
     const { email, items, customer, paymentMethod } = req.body || {};

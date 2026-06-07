@@ -90,6 +90,53 @@ CREATE TABLE IF NOT EXISTS auth_throttle (
 );
 ALTER TABLE auth_throttle ENABLE ROW LEVEL SECURITY;  -- service-role only
 
+-- ---------- CHECKOUT RATE LIMIT (PaymentIntent flooding / card-testing) ----------
+-- Durable across serverless instances. Caps how often a single client IP can
+-- create a PaymentIntent, so a script can't spam Stripe + the orders table or
+-- test stolen cards against the endpoint. Generic fixed-window counter keyed by
+-- an arbitrary string (we key on "cpi:<ip>").
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key          TEXT PRIMARY KEY,
+  count        INTEGER NOT NULL DEFAULT 0,
+  window_start TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;  -- service-role only
+
+-- Atomic fixed-window check: allows at most p_max requests per p_window_seconds
+-- for a given key. Returns TRUE when the request is allowed, FALSE when it's
+-- over the cap. Locks the key row (FOR UPDATE) so concurrent serverless calls
+-- can't both slip past the limit.
+CREATE OR REPLACE FUNCTION check_rate_limit(p_key TEXT, p_max INTEGER, p_window_seconds INTEGER)
+RETURNS BOOLEAN LANGUAGE plpgsql AS $$
+DECLARE
+  v_count INTEGER;
+  v_start TIMESTAMPTZ;
+BEGIN
+  -- Ensure a row exists, then lock it so concurrent requests serialize.
+  INSERT INTO rate_limits (key) VALUES (p_key) ON CONFLICT (key) DO NOTHING;
+  SELECT count, window_start INTO v_count, v_start
+    FROM rate_limits WHERE key = p_key FOR UPDATE;
+
+  -- Window expired → start a fresh window and allow.
+  IF NOW() - v_start >= make_interval(secs => p_window_seconds) THEN
+    UPDATE rate_limits SET count = 1, window_start = NOW() WHERE key = p_key;
+    RETURN TRUE;
+  END IF;
+
+  -- Within the window and under the cap → count this request and allow.
+  IF v_count < p_max THEN
+    UPDATE rate_limits SET count = count + 1 WHERE key = p_key;
+    RETURN TRUE;
+  END IF;
+
+  -- Over the cap → block.
+  RETURN FALSE;
+END;
+$$;
+-- Optional housekeeping: stale keys just sit at their last window. To keep the
+-- table tiny you can periodically prune them, e.g.
+--   DELETE FROM rate_limits WHERE window_start < NOW() - INTERVAL '1 day';
+
 -- ---------- MIGRATIONS (safe to re-run on an existing database) ----------
 -- If you created the tables before these columns existed, run this once.
 ALTER TABLE products ADD COLUMN IF NOT EXISTS printful_variants JSONB DEFAULT '{}';
