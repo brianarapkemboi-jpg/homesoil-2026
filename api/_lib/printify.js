@@ -100,6 +100,10 @@ function plainText(html = '') {
 // in a Printify option title.
 const VKEY = (color, size) => (color ? `${color}::${size}` : size);
 
+// How many mockup images to keep per colour (front/back/lifestyle/etc.) so the
+// customer can visualise the product without bloating the catalog payload.
+const MAX_IMAGES = 6;
+
 // Turn a raw Printify product into a row matching our Supabase `products` schema.
 // Captures BOTH the Size and Color options so the storefront can let customers
 // pick a colour (with a per-colour preview image) and we can fulfil the exact
@@ -117,21 +121,15 @@ export function mapPrintifyProduct(p, shopId = printifyShopId()) {
   const colorIds = {};
   (colorOption?.values || []).forEach(v => { colorIds[v.id] = v; });
 
-  // variantId -> image src (default image wins) so each colour shows its own art.
-  const variantImage = {};
-  for (const img of (p.images || [])) {
-    for (const vid of (img.variant_ids || [])) {
-      if (img.is_default || !(vid in variantImage)) variantImage[vid] = img.src;
-    }
-  }
   const defaultImg = (p.images || []).find(i => i.is_default) || (p.images || [])[0];
 
   // color::size (or size when there's no colour) -> Printify variant id.
   const printify_variants = {};
   const sizes = [];                 // union of sizes across colours (back-compat)
-  const colors = [];                // [{ name, hex, image }] in Printify's order
+  const colors = [];                // [{ name, hex, image, images }] in Printify's order
   const colorSeen = new Set();
   const matrix = {};                // color -> [available sizes]
+  const variantColor = {};          // Printify variant id -> colour title
   const cents = [];
 
   for (const v of usable) {
@@ -140,6 +138,7 @@ export function mapPrintifyProduct(p, shopId = printifyShopId()) {
     const colorVal = ids.map(id => colorIds[id]).find(Boolean);
     const sizeTitle = sizeVal?.title || 'One Size';
     const colorTitle = colorVal?.title || null;
+    variantColor[v.id] = colorTitle;
 
     if (Number.isFinite(v.price)) cents.push(v.price);
     if (!sizes.includes(sizeTitle)) sizes.push(sizeTitle);
@@ -151,7 +150,7 @@ export function mapPrintifyProduct(p, shopId = printifyShopId()) {
       if (!colorSeen.has(colorTitle)) {
         colorSeen.add(colorTitle);
         const hex = Array.isArray(colorVal?.colors) ? colorVal.colors[0] : null;
-        colors.push({ name: colorTitle, hex: hex || null, image: variantImage[v.id] || defaultImg?.src || null });
+        colors.push({ name: colorTitle, hex: hex || null, image: null, images: [] });
       }
       (matrix[colorTitle] = matrix[colorTitle] || []);
       if (!matrix[colorTitle].includes(sizeTitle)) matrix[colorTitle].push(sizeTitle);
@@ -163,11 +162,42 @@ export function mapPrintifyProduct(p, shopId = printifyShopId()) {
     if (usable[0]) printify_variants['One Size'] = usable[0].id;
   }
 
+  // Collect the multiple mockups Printify renders per colour. Each image lists
+  // the variant ids it depicts; we group by colour (default image first).
+  // Images not tied to a specific colour become a shared gallery.
+  const colorImages = {};           // colour title -> [src] (ordered, unique)
+  const shared = [];                // images with no specific colour
+  const ordered = [...(p.images || [])].sort((a, b) => (b.is_default ? 1 : 0) - (a.is_default ? 1 : 0));
+  for (const img of ordered) {
+    if (!img.src) continue;
+    const cols = new Set();
+    for (const vid of (img.variant_ids || [])) { const ct = variantColor[vid]; if (ct) cols.add(ct); }
+    if (cols.size === 0) {
+      if (!shared.includes(img.src)) shared.push(img.src);
+    } else {
+      for (const ct of cols) {
+        (colorImages[ct] = colorImages[ct] || []);
+        if (!colorImages[ct].includes(img.src)) colorImages[ct].push(img.src);
+      }
+    }
+  }
+
+  // Attach each colour's mockups (its own, then any shared ones), capped.
+  for (const c of colors) {
+    const imgs = [...(colorImages[c.name] || [])];
+    for (const s of shared) if (!imgs.includes(s)) imgs.push(s);
+    c.images = imgs.slice(0, MAX_IMAGES);
+    c.image = c.images[0] || defaultImg?.src || null;
+  }
+
   // Lowest enabled price (Printify stores prices in cents).
   const price = cents.length ? Math.min(...cents) / 100 : 0;
 
-  // Public, browser-safe option data (no variant ids). Empty when single-colour.
-  const variant_options = colors.length ? { colors, matrix } : {};
+  // Public, browser-safe option data (no variant ids).
+  const gallery = (shared.length ? shared : (p.images || []).map(i => i.src).filter(Boolean)).slice(0, MAX_IMAGES);
+  const variant_options = {};
+  if (colors.length) { variant_options.colors = colors; variant_options.matrix = matrix; }
+  if (gallery.length) variant_options.gallery = gallery;
 
   return {
     id: String(p.id),
@@ -175,7 +205,7 @@ export function mapPrintifyProduct(p, shopId = printifyShopId()) {
     price,
     stock: 9999, // print-on-demand: effectively unlimited
     description: plainText(p.description),
-    image_url: (colors[0]?.image) || defaultImg?.src || null,
+    image_url: (colors[0]?.image) || gallery[0] || defaultImg?.src || null,
     sizes,
     category: inferCategory(p.title),
     printify_product_id: String(p.id),
