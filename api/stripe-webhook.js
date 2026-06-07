@@ -11,6 +11,7 @@
 // ============================================================
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { recordTaxTransaction } from './_lib/tax.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -103,6 +104,13 @@ export default async function handler(req, res) {
         }
         if (oversold) {
           await supabase.from('orders').update({ status: 'oversold_review' }).eq('id', orderId);
+        }
+
+        // Record the Stripe Tax transaction for filing/reporting. No-op unless
+        // Stripe Tax priced this order (metadata.tax_calculation set by
+        // /api/calculate-tax). Inside the claim block so retries don't double-record.
+        if (pi.metadata?.tax_calculation) {
+          await recordTaxTransaction(pi.metadata.tax_calculation, orderId);
         }
 
         // Fulfillment is handled by hand in the Printful dashboard, so we stop
