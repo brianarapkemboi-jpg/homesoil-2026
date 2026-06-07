@@ -56,8 +56,9 @@ export default async function handler(req, res) {
       if (p.stock < qty) return res.status(409).json({ error: `Out of stock: ${p.name}` });
       subtotal += p.price * qty;
       // Persist authoritative name/price from the DB (never the browser's
-      // claimed price); keep size + qty from the request.
-      orderItems.push({ id: p.id, name: p.name, price: p.price, size: item.size, qty });
+      // claimed price); keep size + colour + qty from the request (colour is
+      // needed to fulfil the exact Printify variant).
+      orderItems.push({ id: p.id, name: p.name, price: p.price, size: item.size, color: item.color || null, qty });
     }
     const shipping = subtotal >= FREE_SHIP_THRESHOLD ? 0 : FLAT_SHIPPING;
     const tax = subtotal * TAX_RATE;

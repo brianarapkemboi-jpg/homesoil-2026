@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS products (
   printify_product_id TEXT,                   -- Printify product id (sync key)
   printify_shop_id    TEXT,                   -- which Printify shop it came from
   printify_blueprint_id BIGINT,               -- Printify catalog blueprint
-  printify_variants   JSONB DEFAULT '{}',     -- per-size variant map, e.g. {"S":4567,"M":4568}
+  printify_variants   JSONB DEFAULT '{}',     -- color+size -> variant id, e.g. {"Black::S":4567} (hidden)
+  variant_options     JSONB DEFAULT '{}',     -- public colour/size matrix the storefront renders
   printful_product_id BIGINT,                 -- legacy Printful columns (kept for back-compat)
   printful_variant_id BIGINT,
   printful_variants   JSONB DEFAULT '{}',
@@ -150,6 +151,7 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS printify_product_id   TEXT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS printify_shop_id      TEXT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS printify_blueprint_id BIGINT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS printify_variants     JSONB DEFAULT '{}';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS variant_options       JSONB DEFAULT '{}';
 ALTER TABLE orders   ADD COLUMN IF NOT EXISTS printify_order_id     TEXT;
 -- Look up products fast by their Printify id (used by the delete webhook).
 CREATE INDEX IF NOT EXISTS idx_products_printify_product_id ON products (printify_product_id);

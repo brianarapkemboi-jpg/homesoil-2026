@@ -77,7 +77,11 @@ export default async function handler(req, res) {
       // a per-size variant map, e.g. {"S":4567,"M":4568}.
       printify_product_id: p.printify_product_id ? String(p.printify_product_id) : null,
       printify_variants: (p.printify_variants && typeof p.printify_variants === 'object' && !Array.isArray(p.printify_variants))
-        ? p.printify_variants : {}
+        ? p.printify_variants : {},
+      // Public colour/size matrix (auto-synced from Printify); round-tripped so
+      // an admin save never wipes it.
+      variant_options: (p.variant_options && typeof p.variant_options === 'object' && !Array.isArray(p.variant_options))
+        ? p.variant_options : {}
     }));
 
     const { error } = await supabase.from('products').upsert(clean, { onConflict: 'id' });
