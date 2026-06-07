@@ -1,0 +1,7 @@
+# Keep internal docs, the DB schema, and tooling OUT of the public deployment.
+# The static site only needs index.html + the /api functions; these files were
+# previously fetchable at https://homesoil2026.com/<file> and shouldn't be.
+*.md
+*.sql
+.env.example
+.claude/
