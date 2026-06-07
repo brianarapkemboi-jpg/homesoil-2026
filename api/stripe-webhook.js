@@ -2,9 +2,8 @@
 // POST /api/stripe-webhook
 // Stripe calls this when a payment succeeds. This is the SOURCE OF TRUTH for
 // "the customer actually paid" — never mark an order paid from the browser.
-// On success: mark the order paid, capture the customer email + receipt, and
-// decrement stock. Fulfillment is done by hand in the Printful dashboard, so
-// the order is left at status 'paid' for the owner to process.
+// On success: mark the order paid, capture the customer email + receipt,
+// decrement stock, and place the matching order in Printify for fulfillment.
 //
 // Set the webhook in Stripe → Developers → Webhooks → add endpoint:
 //   https://YOUR-APP.vercel.app/api/stripe-webhook   event: payment_intent.succeeded
@@ -12,6 +11,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { recordTaxTransaction } from './_lib/tax.js';
+import { createPrintifyOrder, sendToProduction } from './_lib/printify.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -113,10 +113,35 @@ export default async function handler(req, res) {
           await recordTaxTransaction(pi.metadata.tax_calculation, orderId);
         }
 
-        // Fulfillment is handled by hand in the Printful dashboard, so we stop
-        // here with the order at 'paid' (or 'oversold_review'). The order row
-        // carries everything needed to place it manually: line items with sizes,
-        // the customer's shipping details, and their email.
+        // --- Fulfillment: place the order in Printify ---
+        // Print-on-demand, so this normally runs even though stock is nominal.
+        // We never block the webhook on it: if Printify errors, the order stays
+        // 'paid' for the owner to place by hand in the dashboard.
+        if (!oversold) {
+          try {
+            const ids = order.items.map(i => i.id);
+            const { data: rows } = await supabase
+              .from('products')
+              .select('id, printify_product_id, printify_variants')
+              .in('id', ids);
+            const productMap = {};
+            (rows || []).forEach(r => { productMap[r.id] = r; });
+
+            const pf = await createPrintifyOrder(order, productMap);
+            if (pf?.id) {
+              await supabase.from('orders')
+                .update({ printify_order_id: String(pf.id), status: 'fulfilling' })
+                .eq('id', orderId);
+              // Only auto-submit to production (which charges you) when explicitly
+              // enabled — otherwise the order waits for one click in Printify.
+              if (process.env.PRINTIFY_AUTO_FULFILL === 'true') {
+                await sendToProduction(pf.id);
+              }
+            }
+          } catch (pfErr) {
+            console.error('Printify fulfillment error:', pfErr.message);
+          }
+        }
       }
     } catch (err) {
       console.error('Order finalize error:', err.message);

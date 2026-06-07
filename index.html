@@ -942,12 +942,14 @@
       <div id="admin-tab-products">
         <div class="flex justify-between items-center mb-2 gap-2 flex-wrap">
           <h3 class="font-bold text-lg text-navy">Manage Products</h3>
-          <div class="flex gap-2">
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="syncFromPrintify()" id="sync-printify-btn" class="bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">🔄 Sync from Printify</button>
             <button onclick="showAddProductForm()" class="bg-navy text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors">+ Add Product</button>
             <button onclick="saveProductsToDB()" id="save-products-btn" class="bg-red-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">💾 Save to Live Store</button>
           </div>
         </div>
-        <p class="text-xs text-gray-500 mb-4">Edit below, then click <strong>Save to Live Store</strong> to publish changes to all customers. Nothing goes live until you save.</p>
+        <p class="text-xs text-gray-500 mb-2">Design products in <strong>Printify</strong> — when you publish them there they sync here automatically. Use <strong>Sync from Printify</strong> to pull them in now, or edit price/stock below and <strong>Save to Live Store</strong>.</p>
+        <p class="text-xs text-gray-400 mb-4">First-time setup: <button onclick="registerPrintifyWebhooks()" class="underline hover:text-navy">enable auto-publish webhooks</button> so future Printify publishes appear instantly.</p>
         <div id="admin-product-table" class="space-y-3"></div>
       </div>
 
@@ -1635,7 +1637,7 @@ function processPaymentDemo(email, method) {
   }, 900);
 }
 
-// Build the order object sent to the backend (also used for Printful fulfillment)
+// Build the order object sent to the backend (also used for Printify fulfillment)
 function buildOrderPayload(email, method) {
   const sub = cartTotal();
   const ship = sub >= STORE_CONFIG.freeShippingThreshold ? 0 : STORE_CONFIG.flatShipping;
@@ -1797,7 +1799,7 @@ let adminPw = '';  // owner password held in memory during the admin session onl
 
 async function openAdminDashboard() {
   document.getElementById('admin-dashboard-modal').classList.add('open');
-  await loadAdminProductsFull();   // pull full rows incl. Printful variant ids
+  await loadAdminProductsFull();   // pull full rows incl. Printify variant ids
   renderAdminProducts();
   populateAdProductSelect();
   if (adminWantsAdsTab) {
@@ -1813,7 +1815,7 @@ function closeAdminDashboard() {
   document.getElementById('admin-dashboard-modal').classList.remove('open');
 }
 
-// Load the full catalog (including the hidden per-size Printful variant ids)
+// Load the full catalog (including the hidden Printify fulfillment mapping)
 // for editing. Uses the authenticated admin endpoint — the public /api/products
 // omits those columns. Falls back silently to whatever catalog is loaded.
 async function loadAdminProductsFull() {
@@ -1830,7 +1832,8 @@ async function loadAdminProductsFull() {
       id: p.id, name: p.name, price: Number(p.price), stock: p.stock,
       description: p.description || '', image: p.image_url || '',
       sizes: p.sizes || [], category: p.category || 'tees',
-      printful_variants: p.printful_variants || {}
+      printify_product_id: p.printify_product_id || null,
+      printify_variants: p.printify_variants || {}
     }));
   } catch (e) { /* offline / not live — keep current catalog */ }
 }
@@ -1882,8 +1885,8 @@ function renderAdminProducts() {
               <input type="url" value="${p.image}" class="form-input text-sm" onchange="PRODUCTS[${i}].image = this.value; renderProducts();" />
             </div>
             <div class="col-span-2 md:col-span-4">
-              <label class="form-label">Printful variants — size:id, comma-separated (for manual fulfillment)</label>
-              <input type="text" value="${formatVariants(p.printful_variants).replace(/"/g,'&quot;')}" class="form-input text-sm" placeholder="S:4567, M:4568, L:4569, XL:4570" onchange="PRODUCTS[${i}].printful_variants = parseVariants(this.value);" />
+              <label class="form-label">Printify variants — size:id (auto-filled on sync; used for fulfillment)</label>
+              <input type="text" value="${formatVariants(p.printify_variants).replace(/"/g,'&quot;')}" class="form-input text-sm" placeholder="S:4567, M:4568, L:4569, XL:4570" onchange="PRODUCTS[${i}].printify_variants = parseVariants(this.value);" />
             </div>
           </div>
           <div class="mt-2">
@@ -1906,7 +1909,8 @@ async function saveProductsToDB() {
       id: p.id, name: p.name, price: p.price, stock: p.stock,
       description: p.description, image_url: p.image,
       sizes: p.sizes, category: p.category,
-      printful_variants: p.printful_variants || {}
+      printify_product_id: p.printify_product_id || null,
+      printify_variants: p.printify_variants || {}
     }));
     const res = await fetch(STORE_CONFIG.backendUrl + '/api/admin-products', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1947,11 +1951,49 @@ function showAddProductForm() {
     id: newId, name: 'New Product', price: 30, stock: 20,
     description: 'Product description here.',
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
-    sizes: ['S','M','L','XL'], category: 'tees', printful_variants: {}
+    sizes: ['S','M','L','XL'], category: 'tees', printify_product_id: null, printify_variants: {}
   });
   renderAdminProducts();
   renderProducts();
   showToast('New product added — edit the details above');
+}
+
+// Pull the catalog from Printify into Supabase, then reload the admin view.
+// You design products in Printify; this brings them (and their variant ids) in.
+async function syncFromPrintify() {
+  const btn = document.getElementById('sync-printify-btn');
+  const original = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = 'Syncing…'; btn.disabled = true; }
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/printify-sync', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPw })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Sync failed');
+    await loadAdminProductsFull();
+    renderAdminProducts(); renderProducts(); populateAdProductSelect();
+    showToast('✅ Synced ' + (data.synced || 0) + ' products from Printify');
+  } catch (e) {
+    showToast('Sync error: ' + e.message);
+  } finally {
+    if (btn) { btn.innerHTML = original; btn.disabled = false; }
+  }
+}
+
+// One-time: register the Printify webhooks so future publishes appear instantly.
+async function registerPrintifyWebhooks() {
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/printify-register-webhooks', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPw })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not register webhooks');
+    showToast('✅ Auto-publish webhooks enabled');
+  } catch (e) {
+    showToast('Webhook setup error: ' + e.message);
+  }
 }
 
 function switchAdminTab(tab, btn) {
@@ -2218,7 +2260,7 @@ const LEGAL_CONTENT = {
       <h4>How we use it</h4>
       <p>To process, fulfill, and ship your order; send order and shipping confirmations; provide customer support; comply with tax and legal obligations; and — where permitted — measure and improve our advertising.</p>
       <h4>How we share it</h4>
-      <p>We share order data only with vendors needed to run the store: our payment processor (Stripe), print/fulfillment partner (Printful), shipping carriers, and email provider. We use advertising and analytics technologies from Meta, TikTok, and Google that may set cookies and receive your device identifiers and activity. <strong>Under some state laws (e.g. California's CCPA/CPRA), this use of advertising pixels may be considered "sharing" or a "sale" of personal information.</strong></p>
+      <p>We share order data only with vendors needed to run the store: our payment processor (Stripe), print/fulfillment partner (Printify), shipping carriers, and email provider. We use advertising and analytics technologies from Meta, TikTok, and Google that may set cookies and receive your device identifiers and activity. <strong>Under some state laws (e.g. California's CCPA/CPRA), this use of advertising pixels may be considered "sharing" or a "sale" of personal information.</strong></p>
       <h4>Your choices &amp; rights ("Do Not Sell or Share")</h4>
       <p>Depending on your state, you may have the right to access, correct, or delete your personal information, and to opt out of targeted advertising / the "sale" or "sharing" of your data. To exercise any of these, email <strong>support@homesoil2026.com</strong> with the subject "Privacy Request"; we verify and respond within the timeframe required by law (generally 45 days). We honor browser Global Privacy Control (GPC) signals where required. We will not discriminate against you for exercising these rights.</p>
       <h4>Data retention</h4>
@@ -2379,27 +2421,18 @@ f) Admin auth: Use supabase.auth.signInWithPassword({ email, password })
    Replace the demo password check with real Supabase session management.
 
 
-2. PRINTFUL — Auto-Fulfillment
-────────────────────────────────
-a) Create account at printful.com → connect store via API
-b) Get API key from Dashboard → Store → API
-
-c) MVP path (start here): Fulfill manually in Printful dashboard first.
-   Just forward order details by email until you verify unit economics.
-
-d) Auto-fulfillment flow (production):
-   checkout complete
-     → POST https://api.printful.com/orders
-     → body: { recipient: {name,address,...}, items: [{sync_variant_id, quantity}] }
-     → Printful prints, ships, sends tracking to customer
-
-e) Webhooks from Printful:
-   - package_shipped → update order status, email tracking to customer
-   - order_failed    → alert you to re-fulfill manually
-   Set webhook URL in Printful dashboard → Store → Webhooks
-
-f) Sync products: Each product needs a Printful "sync product" with variant IDs.
-   Map your PRODUCTS[].id to Printful sync_variant_ids.
+2. PRINTIFY — Product sync + Auto-Fulfillment  (IMPLEMENTED — see PRINTIFY-SETUP.md)
+──────────────────────────────────────────────────────────────────────────────────
+This is now wired up in the backend. Full guide: PRINTIFY-SETUP.md.
+a) Design products by hand in Printify; click Publish.
+b) /api/printify-webhook (product:publish:started) upserts them into Supabase, so
+   they appear on the store automatically. /api/printify-sync does a full pull
+   on demand (admin → "🔄 Sync from Printify").
+c) Auto-fulfillment: /api/stripe-webhook → createPrintifyOrder() places the order
+   in Printify on payment (POST /v1/shops/{shop}/orders.json), storing
+   printify_order_id. PRINTIFY_AUTO_FULFILL=true also sends it to production.
+d) Env: PRINTIFY_API_TOKEN, PRINTIFY_SHOP_ID, PRINTIFY_WEBHOOK_SECRET,
+   PRINTIFY_AUTO_FULFILL.
 
 
 3. PAYMENTS — Production-Ready Checkout
@@ -2427,7 +2460,7 @@ d) One-page checkout → production flow:
    2. Client calls your server: POST /checkout { items, email }
    3. Server creates Stripe PaymentIntent, returns client_secret
    4. Client confirms payment with Stripe.js
-   5. Server webhook (payment_intent.succeeded) → create Printful order
+   5. Server webhook (payment_intent.succeeded) → create Printify order
    6. Client shows confirmation page
 
 e) No server? Use Stripe Payment Links or Shopify Buy Button as a bridge

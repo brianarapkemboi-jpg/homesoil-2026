@@ -13,9 +13,13 @@ CREATE TABLE IF NOT EXISTS products (
   image_url           TEXT,
   sizes               TEXT[],
   category            TEXT,
-  printful_product_id BIGINT,
-  printful_variant_id BIGINT,                 -- legacy single-variant id (kept for back-compat)
-  printful_variants   JSONB DEFAULT '{}',     -- per-size sync-variant map, e.g. {"S":4567,"M":4568}
+  printify_product_id TEXT,                   -- Printify product id (sync key)
+  printify_shop_id    TEXT,                   -- which Printify shop it came from
+  printify_blueprint_id BIGINT,               -- Printify catalog blueprint
+  printify_variants   JSONB DEFAULT '{}',     -- per-size variant map, e.g. {"S":4567,"M":4568}
+  printful_product_id BIGINT,                 -- legacy Printful columns (kept for back-compat)
+  printful_variant_id BIGINT,
+  printful_variants   JSONB DEFAULT '{}',
   created_at          TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -34,9 +38,10 @@ CREATE TABLE IF NOT EXISTS orders (
   shipping           NUMERIC(10,2),
   tax                NUMERIC(10,2),
   total              NUMERIC(10,2),
-  status             TEXT DEFAULT 'pending',  -- pending | paid | oversold_review | shipped | refunded | partial_refund
+  status             TEXT DEFAULT 'pending',  -- pending | paid | fulfilling | oversold_review | shipped | refunded | partial_refund
   payment_method     TEXT,
-  printful_order_id  BIGINT,
+  printify_order_id  TEXT,
+  printful_order_id  BIGINT,                  -- legacy (kept for back-compat)
   created_at         TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -140,6 +145,14 @@ $$;
 -- ---------- MIGRATIONS (safe to re-run on an existing database) ----------
 -- If you created the tables before these columns existed, run this once.
 ALTER TABLE products ADD COLUMN IF NOT EXISTS printful_variants JSONB DEFAULT '{}';
+-- Printify migration:
+ALTER TABLE products ADD COLUMN IF NOT EXISTS printify_product_id   TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS printify_shop_id      TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS printify_blueprint_id BIGINT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS printify_variants     JSONB DEFAULT '{}';
+ALTER TABLE orders   ADD COLUMN IF NOT EXISTS printify_order_id     TEXT;
+-- Look up products fast by their Printify id (used by the delete webhook).
+CREATE INDEX IF NOT EXISTS idx_products_printify_product_id ON products (printify_product_id);
 
 -- ---------- SEED: load the 10 launch products ----------
 -- (Optional) Copy your PRODUCTS array values here, or insert via the admin later.

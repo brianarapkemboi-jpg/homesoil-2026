@@ -7,14 +7,14 @@ You currently have:
 
 This guide takes you from the **demo** to **taking real money and auto-fulfilling orders**.
 
-> **Note:** designs/artwork are produced by your own external system (trend research → image generation) and uploaded to Printful directly. There is no in-store AI design generator.
+> **Note:** you design products **by hand in Printify**. When you publish a product there it syncs to this store automatically (Supabase → storefront). See **`PRINTIFY-SETUP.md`** for the full Printify integration guide.
 
 ---
 
 ## What only YOU can do (requires your accounts)
 The code is written. These steps need your logins/keys and a bank account:
 
-1. Create accounts: **Stripe**, **PayPal Business** (optional), **Printful**, **Supabase**.
+1. Create accounts: **Stripe**, **PayPal Business** (optional), **Printify**, **Supabase**.
 2. Connect **Stripe → your bank account** (this is how money reaches you).
 3. Paste the secret keys into Vercel's environment variables (I can run `vercel env add` with you).
 4. Authorize the redeploy.
@@ -33,14 +33,15 @@ The code is written. These steps need your logins/keys and a bank account:
 3. Apple Pay / Google Pay / Cash App: Settings → Payment methods → enable them (Stripe handles the wallets automatically via `automatic_payment_methods`).
 4. **Money flow:** customer pays → Stripe → auto-payout to your bank (daily/weekly). Fee ≈ 2.9% + $0.30.
 
-## Step 3 — Fulfillment (Printful, manual) · ~20 min
-Orders are fulfilled **by hand** in the Printful dashboard — the store does not
-auto-submit orders to Printful. The webhook just marks paid orders, and you
-place them in Printful yourself.
-1. Create a [Printful](https://printful.com) account.
-2. Build each product once in Printful (pick garment, upload the design) → note each **sync variant id** per size.
-3. In your store's **Admin → Products**, enter those ids in the **Printful variants** field per product, e.g. `S:4567, M:4568, L:4569`, then **💾 Save to Live Store**.
-4. When a paid order arrives (status `paid` in Supabase `orders`), create the order in Printful using the saved size→variant ids plus the order's shipping details and email. Mark anything flagged `oversold_review` (stock ran out) before fulfilling.
+## Step 3 — Products & fulfillment (Printify, automated) · ~15 min
+You design products in Printify; this store **syncs them automatically** and
+**places orders for you** when customers pay. Full details in **`PRINTIFY-SETUP.md`**.
+1. Create a [Printify](https://printify.com) account and design your products.
+2. Printify → **My profile → Connections** → generate a **Personal Access Token** → set `PRINTIFY_API_TOKEN` in Vercel.
+3. Find your shop id: from the admin, click **🔄 Sync from Printify** (or call `/api/printify-sync` with `{listShops:true}`) → set `PRINTIFY_SHOP_ID` in Vercel.
+4. In the store **Admin → Products**, click **enable auto-publish webhooks** once so future Printify publishes appear instantly. Set `PRINTIFY_WEBHOOK_SECRET` to a random string first (recommended).
+5. Publish a product in Printify → it appears on the store automatically. (Use **🔄 Sync from Printify** any time to pull everything in.)
+6. Orders: on payment, the Stripe webhook creates the matching Printify order. Set `PRINTIFY_AUTO_FULFILL=true` to auto-send to production (charges your Printify balance); leave it unset to approve each order with one click in Printify.
 
 ## Step 4 — Deploy env vars to Vercel · ~10 min
 The project is already linked to Vercel and live. To go live you only need to add secrets:
@@ -68,7 +69,7 @@ That single change turns on real payments. Redeploy.
 ## Launch checklist
 - [ ] Supabase schema run + products seeded
 - [ ] Stripe activated + bank connected + webhook added
-- [ ] Printful products mapped (variant ids) with your own artwork
+- [ ] Printify token + shop id set in Vercel; products designed & published in Printify, then synced (🔄 Sync from Printify) + auto-publish webhooks enabled
 - [ ] Env vars set in Vercel
 - [ ] `STORE_CONFIG` updated + redeployed
 - [ ] Ad pixels added (Meta/TikTok/GA4) — required before running ads

@@ -42,11 +42,12 @@ export default async function handler(req, res) {
 
   try {
     // --- Read the full catalog (admin only; includes internal columns like
-    //     printful_variants that the public /api/products endpoint hides) ---
+    //     printify_variants that the public /api/products endpoint hides) ---
     if (!products && !deleteId) {
       const { data, error } = await supabase
         .from('products').select('*').order('created_at', { ascending: true });
       if (error) throw error;
+      // Full rows incl. the hidden Printify mapping (printify_variants etc.).
       return res.status(200).json({ ok: true, products: data });
     }
 
@@ -71,10 +72,12 @@ export default async function handler(req, res) {
       image_url: p.image_url ? String(p.image_url) : null,
       sizes: Array.isArray(p.sizes) ? p.sizes : [],
       category: p.category ? String(p.category) : null,
-      // Per-size Printful sync-variant map, e.g. {"S":4567,"M":4568}. Used for
-      // manual fulfillment; only kept when it's a plain object.
-      printful_variants: (p.printful_variants && typeof p.printful_variants === 'object' && !Array.isArray(p.printful_variants))
-        ? p.printful_variants : {}
+      // Printify fulfillment mapping. Synced automatically from Printify, but
+      // round-tripped here so an admin save never wipes it. printify_variants is
+      // a per-size variant map, e.g. {"S":4567,"M":4568}.
+      printify_product_id: p.printify_product_id ? String(p.printify_product_id) : null,
+      printify_variants: (p.printify_variants && typeof p.printify_variants === 'object' && !Array.isArray(p.printify_variants))
+        ? p.printify_variants : {}
     }));
 
     const { error } = await supabase.from('products').upsert(clean, { onConflict: 'id' });
