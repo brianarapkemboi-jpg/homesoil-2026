@@ -188,6 +188,23 @@
     .btn-buy-now:hover { background:var(--red-dk); }
     .btn-buy-now:active { transform:scale(0.98); }
 
+    /* ===== STICKY MOBILE CART BAR (mobile only; shown when cart has items) ===== */
+    #sticky-cart-bar {
+      position:fixed; left:0; right:0; bottom:0; z-index:750;
+      padding:10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+      background:#fff; box-shadow:0 -4px 20px rgba(0,0,0,0.12);
+    }
+    #sticky-cart-bar button {
+      width:100%; display:flex; align-items:center; justify-content:space-between;
+      gap:10px; background:var(--red); color:#fff; border:none; border-radius:12px;
+      padding:14px 18px; font-weight:900; font-size:1rem; cursor:pointer;
+      transition: background 120ms, transform 80ms;
+    }
+    #sticky-cart-bar button:hover { background:var(--red-dk); }
+    #sticky-cart-bar button:active { transform:scale(0.99); }
+    #sticky-cart-bar .scb-total { font-variant-numeric:tabular-nums; }
+    @media (min-width:768px) { #sticky-cart-bar { display:none !important; } }
+
     /* ===== CART DRAWER ===== */
     .cart-overlay {
       position:fixed; inset:0; background:rgba(0,0,0,0.5);
@@ -435,14 +452,6 @@
   <div class="hero-stars"></div>
   <div class="max-w-5xl mx-auto relative z-10 text-center">
 
-    <!-- Match Center filters: primary entry point — jump to the docked section below -->
-    <div class="flex gap-2 justify-center flex-wrap mb-5">
-      <button class="filter-btn filter-btn-ondark active-filter" data-mf="upcoming" onclick="setMatchFilter('upcoming', {scroll:true})">Upcoming</button>
-      <button class="filter-btn filter-btn-ondark" data-mf="live" onclick="setMatchFilter('live', {scroll:true})">🔴 Live</button>
-      <button class="filter-btn filter-btn-ondark" data-mf="results" onclick="setMatchFilter('results', {scroll:true})">Results</button>
-      <button class="filter-btn filter-btn-ondark" data-mf="all" onclick="setMatchFilter('all', {scroll:true})">All</button>
-    </div>
-
     <div class="inline-flex items-center gap-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-full px-4 py-1.5 text-white text-xs font-semibold uppercase tracking-widest mb-6">
       🌎 USA • Canada • Mexico — Summer 2026
     </div>
@@ -466,19 +475,27 @@
       <p class="text-white text-xs mt-2 font-medium" style="color:rgba(255,255,255,0.5);">Opening Match — June 11, 2026</p>
     </div>
 
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+    <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
       <a href="#products" class="btn-primary inline-block text-center" style="width:auto; padding:15px 36px; font-size:1.05rem;">
-        🛒 Shop the Collection
+        🛒 Shop the Drop
       </a>
+      <span class="text-white text-sm font-semibold" style="color:rgba(255,255,255,0.85);">
+        ⚡ First 200 orders get a <span style="color:var(--gold);">free enamel pin</span>
+      </span>
     </div>
+
+    <!-- Hero product showcase — real merchandise pulled from the live catalog
+         (populated by renderHeroShowcase once products load). -->
+    <a href="#products" id="hero-showcase" class="mt-10 grid grid-cols-3 gap-3 max-w-2xl mx-auto" style="display:none;"></a>
+
   </div>
 </section>
 
 <!-- ====================================================
      SECTION 2: TRUST BAR
      ==================================================== -->
-<div class="trust-bar overflow-x-auto">
-  <div class="flex items-center justify-center min-w-max mx-auto divide-x divide-white divide-opacity-20">
+<div class="trust-bar">
+  <div class="flex flex-wrap md:flex-nowrap items-center justify-center md:min-w-max mx-auto md:divide-x md:divide-white md:divide-opacity-20">
     <div class="trust-item"><span class="trust-icon">🇺🇸</span><span class="text-sm font-semibold">Printed in USA</span></div>
     <div class="trust-item"><span class="trust-icon">📦</span><span class="text-sm font-semibold">Ships in 3–5 Days</span></div>
     <div class="trust-item"><span class="trust-icon">✅</span><span class="text-sm font-semibold">30-Day Happiness Guarantee</span></div>
@@ -830,6 +847,17 @@
       <button onclick="acceptConsent()" style="background:#dc2626;border:none;color:#fff;font-weight:700;font-size:13px;padding:8px 18px;border-radius:8px;cursor:pointer;">Accept</button>
     </div>
   </div>
+</div>
+
+<!-- ====================================================
+     STICKY MOBILE CART BAR — persistent checkout entry on phones.
+     Hidden until the cart has items; toggled in updateCartUI().
+     ==================================================== -->
+<div id="sticky-cart-bar" style="display:none;">
+  <button onclick="openCart()" aria-label="Open cart and checkout">
+    <span><span id="scb-count">0 items</span> · <span class="scb-total" id="scb-total">$0.00</span></span>
+    <span>View Cart →</span>
+  </button>
 </div>
 
 <!-- ====================================================
@@ -1323,6 +1351,14 @@ function updateCartUI() {
   document.getElementById('cart-subtotal').textContent = '$' + total.toFixed(2);
   document.getElementById('cart-shipping-line').textContent = total >= 75 ? 'FREE' : '$6.99';
   document.getElementById('cart-shipping-line').className = total >= 75 ? 'text-sm text-green-600 font-semibold' : 'text-sm text-gray-600';
+
+  // Sticky mobile cart bar — visible only when there's something to check out.
+  const scb = document.getElementById('sticky-cart-bar');
+  if (scb) {
+    scb.style.display = count > 0 ? 'block' : 'none';
+    document.getElementById('scb-count').textContent = count === 1 ? '1 item' : count + ' items';
+    document.getElementById('scb-total').textContent = '$' + total.toFixed(2);
+  }
 }
 
 // ===================================================
@@ -1356,9 +1392,28 @@ async function loadProductsFromDB() {
     // note for the real catalog (or an honest "no products" message).
     productsLoaded = true;
     renderProducts();
+    renderHeroShowcase();
     preloadProductImages();
     if (document.getElementById('ad-product-select')) populateAdProductSelect();
   }
+}
+
+// Fill the hero with real merchandise so shoppers see product above the fold
+// (apparel store should never show a blank hero). Picks the first 3 products
+// that have an image; stays hidden if the catalog hasn't loaded any.
+function renderHeroShowcase() {
+  const el = document.getElementById('hero-showcase');
+  if (!el) return;
+  const picks = PRODUCTS
+    .map(p => ({ p, src: (p.colors && p.colors[0] && p.colors[0].image) || p.image }))
+    .filter(x => x.src)
+    .slice(0, 3);
+  if (picks.length < 3) { el.style.display = 'none'; return; }
+  el.innerHTML = picks.map(({ p, src }) => `
+    <div class="rounded-xl overflow-hidden bg-white bg-opacity-10 aspect-square" style="border:1px solid rgba(255,255,255,0.15);">
+      <img src="${escapeHtml(src)}" alt="${escapeHtml(p.name)}" loading="lazy" class="w-full h-full object-cover" />
+    </div>`).join('');
+  el.style.display = 'grid';
 }
 
 function renderProducts(filter = 'all', nameQuery = '') {
@@ -1389,7 +1444,8 @@ function renderProducts(filter = 'all', nameQuery = '') {
         <div class="p-3">
           <p class="font-bold text-sm text-navy leading-snug mb-0.5">${escapeHtml(p.name)}</p>
           <!-- Fan-inspired original artwork. Not affiliated with FIFA or U.S. Soccer. -->
-          <p class="text-red-600 font-black text-lg mb-2">$${p.price}</p>
+          <p class="text-red-600 font-black text-lg mb-1">$${p.price}</p>
+          <p class="text-green-700 text-xs font-semibold mb-2">✅ 30-day guarantee · Ships 3–5 days</p>
           ${colorSwatchesHtml(p)}
           <div class="flex flex-wrap gap-1 mb-3" id="sizes-${escapeHtml(p.id)}">
             ${sizeButtonsHtml(p, p.colors && p.colors[0] ? p.colors[0].name : null)}
