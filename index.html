@@ -1266,6 +1266,20 @@ function updateCartQty(key, delta) {
   else saveCart();
 }
 
+// Cart row buttons use data attributes + delegation rather than inline onclick:
+// the cart key is built from variant/size names that may contain quotes or other
+// characters that would break an inline handler string (and silently disable the ✕).
+document.getElementById('cart-items-list').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-cart-action]');
+  if (!btn) return;
+  const key = btn.dataset.cartKey;
+  switch (btn.dataset.cartAction) {
+    case 'remove': removeFromCart(key); break;
+    case 'inc': updateCartQty(key, 1); break;
+    case 'dec': updateCartQty(key, -1); break;
+  }
+});
+
 function updateCartUI() {
   const count = cartCount();
   const badge = document.getElementById('cart-badge');
@@ -1293,14 +1307,14 @@ function updateCartUI() {
           <p class="text-xs text-gray-400">${item.color ? escapeHtml(item.color) + ' · ' : ''}${escapeHtml(item.size)}</p>
           <div class="flex items-center justify-between mt-2">
             <div class="flex items-center gap-2">
-              <button onclick="updateCartQty('${item.key}',-1)" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100">−</button>
+              <button data-cart-key="${escapeHtml(item.key)}" data-cart-action="dec" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100">−</button>
               <span class="text-sm font-semibold">${item.qty}</span>
-              <button onclick="updateCartQty('${item.key}',1)" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100">+</button>
+              <button data-cart-key="${escapeHtml(item.key)}" data-cart-action="inc" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs hover:bg-gray-100">+</button>
             </div>
             <span class="text-sm font-bold text-navy">$${(item.price * item.qty).toFixed(2)}</span>
           </div>
         </div>
-        <button onclick="removeFromCart('${item.key}')" class="text-gray-300 hover:text-red-500 text-lg self-start flex-shrink-0 transition-colors">✕</button>
+        <button data-cart-key="${escapeHtml(item.key)}" data-cart-action="remove" class="text-gray-300 hover:text-red-500 text-lg self-start flex-shrink-0 transition-colors">✕</button>
       </div>
     `).join('');
   }
