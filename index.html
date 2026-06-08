@@ -381,7 +381,7 @@
      ==================================================== -->
 <div class="announce-bar" id="announce-bar">
   ⚽ LIMITED DROP: First 200 orders get a FREE enamel pin — <span id="drop-count">87</span> left &nbsp;·&nbsp;
-  <button onclick="document.getElementById('announce-bar').style.display='none'" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1rem;vertical-align:middle;">✕</button>
+  <button onclick="document.getElementById('announce-bar').style.display='none'; if(window.positionUsaDock)positionUsaDock();" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1rem;vertical-align:middle;">✕</button>
 </div>
 
 <!-- ====================================================
@@ -2776,13 +2776,31 @@ function renderUsaFixtures() {
   updateDockButton();
 }
 
-// Close the dropdown on outside-click / Escape
+// Keep the dock pinned just below the sticky nav's *actual* bottom. The nav sits
+// under the announcement bar (which wraps to 2 lines on phones), so a fixed top
+// would tuck the pill behind the nav at the top of the page until you scroll.
+let _usaDockRaf = null;
+function positionUsaDock() {
+  if (_usaDockRaf) return;
+  _usaDockRaf = requestAnimationFrame(() => {
+    _usaDockRaf = null;
+    const dock = document.getElementById('usa-dock');
+    const nav = document.querySelector('.site-nav');
+    if (!dock || !nav) return;
+    dock.style.top = Math.max(Math.round(nav.getBoundingClientRect().bottom) + 8, 8) + 'px';
+  });
+}
+
+// Close the dropdown on outside-click / Escape; keep the pill positioned under the nav
 function initUsaDock() {
   document.addEventListener('click', (e) => {
     const d = document.getElementById('usa-dock');
     if (d && d.classList.contains('open') && !d.contains(e.target)) closeUsaDock();
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeUsaDock(); });
+  window.addEventListener('scroll', positionUsaDock, { passive: true });
+  window.addEventListener('resize', positionUsaDock);
+  positionUsaDock();
 }
 
 function fmtKickoff(utc) {
