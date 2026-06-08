@@ -317,6 +317,61 @@
 
     /* ===== ANNOUNCEMENT BAR ===== */
     .announce-bar { background:var(--red); color:#fff; text-align:center; padding:8px 16px; font-size:.8rem; font-weight:700; letter-spacing:.04em; }
+
+    /* ===== MATCH CENTER — HERO TABS · DOCKED SECTION · TEAM-USA DOCK ===== */
+
+    /* Hero filter tabs: on-dark variant of the shared .filter-btn (over the navy hero).
+       Scoped to .hero-bg so it outranks the later-defined base .filter-btn rule. */
+    .hero-bg .filter-btn-ondark { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.5); color:#fff; }
+    .hero-bg .filter-btn-ondark:hover, .hero-bg .filter-btn-ondark.active-filter { background:#fff; border-color:#fff; color:var(--navy); }
+
+    /* Team-USA quick-look dock: collapsed pill in the top-right (never covers the hero);
+       opens a dropdown of the selected nation's fixtures & results. Translucent navy glass. */
+    .usa-dock { position:fixed; top:96px; right:16px; z-index:700; color:#fff; }
+    .usa-dock-btn, .usa-dock-panel {
+      background:rgba(0,40,104,.7); border:1px solid rgba(255,255,255,.18);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      box-shadow:0 12px 32px rgba(0,8,30,.32); color:#fff;
+    }
+    .usa-dock-btn {
+      display:inline-flex; align-items:center; gap:9px;
+      padding:9px 15px; border-radius:999px; cursor:pointer; white-space:nowrap;
+      font-size:.9rem; letter-spacing:.03em; line-height:1;
+      transition:background .15s ease, transform .15s ease;
+    }
+    .usa-dock-btn:hover { background:rgba(0,40,104,.9); transform:translateY(-1px); }
+    .usa-dock-flag { font-size:1.05rem; line-height:1; }
+    .usa-dock-caret { opacity:.85; transition:transform .2s ease; }
+    .usa-dock.open .usa-dock-caret { transform:rotate(180deg); }
+    .usa-dock-live { display:none; align-items:center; gap:5px; font-size:.7rem; font-weight:800; letter-spacing:.06em; color:#fecaca; }
+    .usa-dock.live .usa-dock-live { display:inline-flex; }
+    .usa-dock-live::before { content:""; width:8px; height:8px; border-radius:50%; background:#ef4444; animation:mwPulse 1.4s ease-in-out infinite; }
+    @keyframes mwPulse { 0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,.6); } 50% { box-shadow:0 0 0 6px rgba(239,68,68,0); } }
+
+    .usa-dock-panel {
+      position:absolute; top:calc(100% + 8px); right:0;
+      width:320px; max-width:calc(100vw - 32px); max-height:calc(100vh - 128px);
+      border-radius:16px; padding:14px; flex-direction:column; gap:10px;
+    }
+    .usa-dock.open .usa-dock-panel { display:flex; }
+    .usa-dock:not(.open) .usa-dock-panel { display:none; }
+    .usa-dock-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .usa-dock-select { background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:8px; padding:5px 8px; font-weight:700; font-size:.85rem; cursor:pointer; }
+    .usa-dock-select option { color:#1A1A2E; }
+    .usa-dock-close { width:26px; height:26px; flex-shrink:0; border-radius:7px; border:1px solid rgba(255,255,255,.3); background:transparent; color:#fff; font-size:.8rem; cursor:pointer; }
+    .usa-dock-close:hover { background:rgba(255,255,255,.14); }
+    .usa-dock-list { overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+    .usa-fx { display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:8px 10px; font-size:.82rem; }
+    .usa-fx.next { background:rgba(200,168,75,.18); border-color:rgba(200,168,75,.5); }
+    .usa-dock-foot { display:block; text-align:center; font-size:.8rem; font-weight:700; color:#fff; text-decoration:none; padding-top:8px; border-top:1px solid rgba(255,255,255,.12); }
+    .usa-dock-foot:hover { text-decoration:underline; }
+    .usa-dock-next { font-size:.72rem; font-weight:700; opacity:.85; }
+    .usa-dock-shop { display:block; width:100%; text-align:center; background:var(--red); color:#fff; border:none; border-radius:10px; padding:9px; font-weight:800; font-size:.85rem; cursor:pointer; }
+    .usa-dock-shop:hover { background:var(--red-dk); }
+    .usa-fx-cal { margin-top:4px; font-size:.66rem; font-weight:700; color:#cfe0ff; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22); border-radius:6px; padding:2px 7px; cursor:pointer; white-space:nowrap; }
+    .usa-fx-cal:hover { background:rgba(255,255,255,.2); }
+
+    @media (max-width:767px) { .usa-dock-panel { width:calc(100vw - 32px); } }
   </style>
 </head>
 <body>
@@ -349,11 +404,44 @@
 </nav>
 
 <!-- ====================================================
+     TEAM USA DOCK — top-right quick-look dropdown
+     (collapsed pill by default; opens fixtures & results)
+     ==================================================== -->
+<div class="usa-dock" id="usa-dock">
+  <button class="usa-dock-btn" id="usa-dock-btn" onclick="toggleUsaDock(event)" aria-haspopup="true" aria-expanded="false" aria-controls="usa-dock-panel">
+    <span class="usa-dock-flag" id="usa-dock-flag" aria-hidden="true">🇺🇸</span>
+    <span class="font-display font-black uppercase tracking-wide" id="usa-dock-label">Team USA</span>
+    <span class="usa-dock-next" id="usa-dock-next"></span>
+    <span class="usa-dock-live" id="usa-dock-live">LIVE</span>
+    <svg class="usa-dock-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+  </button>
+  <div class="usa-dock-panel" id="usa-dock-panel" role="region" aria-label="Team fixtures and results">
+    <div class="usa-dock-head">
+      <select class="usa-dock-select" id="usa-dock-select" onchange="setDockTeam(this.value)" aria-label="Choose a team">
+        <option value="USA">🇺🇸 USA</option>
+      </select>
+      <button class="usa-dock-close" onclick="closeUsaDock()" aria-label="Close">✕</button>
+    </div>
+    <div class="usa-dock-list" id="usa-fixtures"></div>
+    <button class="usa-dock-shop" id="usa-dock-shop" onclick="shopTeamGear()">🛒 Shop Team USA gear</button>
+    <a href="#matches" class="usa-dock-foot" onclick="closeUsaDock()">View full Match Center →</a>
+  </div>
+</div>
+
+<!-- ====================================================
      SECTION 1: HERO
      ==================================================== -->
 <section class="hero-bg py-16 md:py-24 px-4 relative">
   <div class="hero-stars"></div>
   <div class="max-w-5xl mx-auto relative z-10 text-center">
+
+    <!-- Match Center filters: primary entry point — jump to the docked section below -->
+    <div class="flex gap-2 justify-center flex-wrap mb-5">
+      <button class="filter-btn filter-btn-ondark active-filter" data-mf="upcoming" onclick="setMatchFilter('upcoming', {scroll:true})">Upcoming</button>
+      <button class="filter-btn filter-btn-ondark" data-mf="live" onclick="setMatchFilter('live', {scroll:true})">🔴 Live</button>
+      <button class="filter-btn filter-btn-ondark" data-mf="results" onclick="setMatchFilter('results', {scroll:true})">Results</button>
+      <button class="filter-btn filter-btn-ondark" data-mf="all" onclick="setMatchFilter('all', {scroll:true})">All</button>
+    </div>
 
     <div class="inline-flex items-center gap-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-full px-4 py-1.5 text-white text-xs font-semibold uppercase tracking-widest mb-6">
       🌎 USA • Canada • Mexico — Summer 2026
@@ -440,19 +528,21 @@
 </section>
 
 <!-- ====================================================
-     SECTION 4A: MATCH CENTER (live scores / schedule / standings)
+     SECTION 4A: MATCH CENTER (docked in-page section)
+     Live scores / schedule / standings. Driven by the hero
+     filter tabs (which scroll here) and its own tabs.
      ==================================================== -->
-<section id="matches" class="py-16 px-4" style="background:#fff;">
+<section id="matches" class="py-16 px-4" style="background:#fff; scroll-margin-top:64px;">
   <div class="max-w-5xl mx-auto">
     <div class="text-center mb-8">
       <h2 class="font-display font-black text-navy uppercase text-5xl mb-2">Match Center</h2>
       <p class="text-gray-500 text-base">Live scores, the full schedule, and group standings — World Cup 2026.</p>
     </div>
     <div class="flex gap-2 justify-center flex-wrap mb-6">
-      <button class="filter-btn active-filter" data-mf="upcoming" onclick="setMatchFilter('upcoming', this)">Upcoming</button>
-      <button class="filter-btn" data-mf="live" onclick="setMatchFilter('live', this)">🔴 Live</button>
-      <button class="filter-btn" data-mf="results" onclick="setMatchFilter('results', this)">Results</button>
-      <button class="filter-btn" data-mf="all" onclick="setMatchFilter('all', this)">All</button>
+      <button class="filter-btn active-filter" data-mf="upcoming" onclick="setMatchFilter('upcoming')">Upcoming</button>
+      <button class="filter-btn" data-mf="live" onclick="setMatchFilter('live')">🔴 Live</button>
+      <button class="filter-btn" data-mf="results" onclick="setMatchFilter('results')">Results</button>
+      <button class="filter-btn" data-mf="all" onclick="setMatchFilter('all')">All</button>
     </div>
     <div id="match-list" class="space-y-2 max-w-2xl mx-auto"></div>
 
@@ -1257,9 +1347,10 @@ async function loadProductsFromDB() {
   }
 }
 
-function renderProducts(filter = 'all') {
+function renderProducts(filter = 'all', nameQuery = '') {
   const grid = document.getElementById('product-grid');
-  const filtered = filter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.category === filter);
+  let filtered = filter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.category === filter);
+  if (nameQuery) filtered = filtered.filter(p => (p.name || '').toLowerCase().includes(nameQuery.toLowerCase()));
 
   // Before the live catalog loads, show a loading note rather than a stale/empty
   // grid. After it loads, an empty result means there genuinely are no products.
@@ -1425,7 +1516,7 @@ function buyNow(productId) {
 }
 
 function filterProducts(filter, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
+  document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active-filter'));
   btn.classList.add('active-filter');
   renderProducts(filter);
 }
@@ -2476,13 +2567,222 @@ async function loadMatchCenter() {
   renderStandings();
   renderPickemMatches();
   renderGamedayBanner();
+  populateDockTeams();
+  renderUsaFixtures();
+  scheduleMatchPolling();
 }
 
-function setMatchFilter(f, btn) {
+function setMatchFilter(f, opts) {
   matchFilter = f;
-  document.querySelectorAll('#matches [data-mf]').forEach(b => b.classList.remove('active-filter'));
-  if (btn) btn.classList.add('active-filter');
+  // Keep every tab group in sync (hero tabs + the in-page section tabs)
+  document.querySelectorAll('[data-mf]').forEach(b => b.classList.toggle('active-filter', b.dataset.mf === f));
   renderMatches();
+  if (opts && opts.scroll) {
+    const sec = document.getElementById('matches');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ===== TEAM USA DOCK — quick-look fixtures & results dropdown =====
+let dockTeam = (function(){ try { return localStorage.getItem('hs_dock_team') || 'USA'; } catch(e){ return 'USA'; } })();
+let dockNextMatch = null;
+
+// (#2) Best-effort default team from the visitor's locale (no network, privacy-friendly).
+function visitorCountryISO() {
+  try {
+    const loc = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+    const region = loc.split('-')[1];
+    return region ? region.toUpperCase() : null;
+  } catch (e) { return null; }
+}
+const ISO_TO_TEAM = { US:'USA', CA:'CAN', MX:'MEX', GB:'ENG', BR:'BRA', AR:'ARG', FR:'FRA', DE:'GER',
+  ES:'ESP', PT:'POR', NL:'NED', IT:'ITA', BE:'BEL', HR:'CRO', JP:'JPN', KR:'KOR', AU:'AUS',
+  CO:'COL', UY:'URU', CH:'SUI', RS:'SRB', PL:'POL', DK:'DEN', MA:'MAR', SN:'SEN', GH:'GHA',
+  NG:'NGA', EC:'ECU', CR:'CRC', SA:'KSA', IR:'IRN', QA:'QAT' };
+function guessDefaultTeam(available) {
+  let saved = null;
+  try { saved = localStorage.getItem('hs_dock_team'); } catch (e) {}
+  if (saved && available.includes(saved)) return saved;        // user's explicit choice wins
+  const iso = visitorCountryISO();
+  const mapped = iso && ISO_TO_TEAM[iso];
+  if (mapped && available.includes(mapped)) return mapped;      // their nation, if it's playing
+  if (available.includes('USA')) return 'USA';                  // host default
+  return available[0] || 'USA';
+}
+
+// (#5) compact countdown like "2d 4h" / "4h 12m" / "12m"
+function fmtCountdownShort(ms) {
+  if (ms <= 0) return 'kickoff!';
+  const d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000), mi = Math.floor(ms % 3600000 / 60000);
+  if (d > 0) return d + 'd ' + h + 'h';
+  if (h > 0) return h + 'h ' + mi + 'm';
+  return mi + 'm';
+}
+
+// (#3) download an .ics calendar invite for the selected team's next match
+function addNextMatchToCalendar(e) {
+  if (e) e.stopPropagation();
+  const m = dockNextMatch;
+  if (!m || !m.utc_date) return;
+  const start = new Date(m.utc_date), end = new Date(start.getTime() + 2 * 3600000);
+  const z = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const title = m.home + ' vs ' + m.away + ' — World Cup 2026';
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Home Soil 2026//Match Center//EN',
+    'BEGIN:VEVENT', 'UID:' + String(m.id || title).replace(/\s+/g, '') + '-homesoil',
+    'DTSTAMP:' + z(new Date()), 'DTSTART:' + z(start), 'DTEND:' + z(end),
+    'SUMMARY:' + title, 'DESCRIPTION:FIFA World Cup 2026 — follow live on Home Soil.',
+    'END:VEVENT', 'END:VCALENDAR'
+  ].join('\r\n');
+  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = (m.home + '-vs-' + m.away + '.ics').replace(/\s+/g, '-');
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+// (#4) funnel from fandom to the shop, filtering products by team name when any match
+function shopTeamGear() {
+  const sel = document.getElementById('usa-dock-select');
+  let teamName = dockTeam;
+  if (sel && sel.selectedOptions[0]) teamName = sel.selectedOptions[0].text.replace(/[^A-Za-z ]/g, '').trim() || dockTeam;
+  closeUsaDock();
+  const hasMatch = (typeof PRODUCTS !== 'undefined') && PRODUCTS.some(p => (p.name || '').toLowerCase().includes(teamName.toLowerCase()));
+  document.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active-filter', b.dataset.filter === 'all'));
+  renderProducts('all', hasMatch ? teamName : '');
+  const prod = document.getElementById('products');
+  if (prod) prod.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// (#1) adaptive polling: refresh fast while a match is live, slowly otherwise; pause when tab hidden
+let matchPollTimer = null, matchPollMs = 0;
+function scheduleMatchPolling() {
+  const live = (MATCH_DATA.matches || []).some(m => ['IN_PLAY', 'PAUSED'].includes(m.status));
+  const want = live ? 60000 : 300000;
+  if (want === matchPollMs && matchPollTimer) return;   // already on the right cadence
+  matchPollMs = want;
+  if (matchPollTimer) clearInterval(matchPollTimer);
+  matchPollTimer = setInterval(() => { if (!document.hidden) loadMatchCenter(); }, want);
+}
+
+function toggleUsaDock(e) {
+  if (e) e.stopPropagation();           // don't let the document click-away handler see this
+  const d = document.getElementById('usa-dock');
+  if (!d) return;
+  const open = d.classList.toggle('open');
+  const btn = document.getElementById('usa-dock-btn');
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function closeUsaDock() {
+  const d = document.getElementById('usa-dock');
+  if (!d) return;
+  d.classList.remove('open');
+  const btn = document.getElementById('usa-dock-btn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+function setDockTeam(code) {
+  dockTeam = code;
+  try { localStorage.setItem('hs_dock_team', code); } catch(e){}
+  const sel = document.getElementById('usa-dock-select');
+  if (sel && sel.value !== code) sel.value = code;
+  renderUsaFixtures();
+}
+
+// Matches involving the selected nation
+function dockTeamMatches() {
+  return (MATCH_DATA.matches || []).filter(m => m.home_code === dockTeam || m.away_code === dockTeam);
+}
+
+// Build the team picker from nations in the schedule (USA pinned first)
+function populateDockTeams() {
+  const sel = document.getElementById('usa-dock-select');
+  if (!sel) return;
+  const seen = new Map();
+  (MATCH_DATA.matches || []).forEach(m => {
+    if (m.home_code) seen.set(m.home_code, m.home);
+    if (m.away_code) seen.set(m.away_code, m.away);
+  });
+  if (!seen.has('USA')) seen.set('USA', 'USA');
+  const codes = Array.from(seen.keys()).sort((a, b) =>
+    a === 'USA' ? -1 : b === 'USA' ? 1 : String(seen.get(a)||a).localeCompare(String(seen.get(b)||b)));
+  dockTeam = guessDefaultTeam(codes);
+  sel.innerHTML = codes.map(c =>
+    `<option value="${escapeHtml(c)}"${c === dockTeam ? ' selected' : ''}>${c === 'USA' ? '🇺🇸 ' : ''}${escapeHtml(seen.get(c) || c)}</option>`).join('');
+}
+
+// Reflect team name + live state on the collapsed button
+function updateDockButton() {
+  const dock = document.getElementById('usa-dock');
+  const list = dockTeamMatches();
+
+  // Friendly team name for the pill / shop CTA
+  let name = dockTeam;
+  const sample = list.find(m => m.home_code === dockTeam || m.away_code === dockTeam);
+  if (sample) name = sample.home_code === dockTeam ? sample.home : sample.away;
+  const display = dockTeam === 'USA' ? 'Team USA' : (name || dockTeam);
+  const label = document.getElementById('usa-dock-label');
+  const flagEl = document.getElementById('usa-dock-flag');
+  if (label) label.textContent = display;
+  if (flagEl) flagEl.textContent = dockTeam === 'USA' ? '🇺🇸' : '⚽';
+
+  const live = list.some(m => ['IN_PLAY', 'PAUSED'].includes(m.status));
+  if (dock) dock.classList.toggle('live', live);
+
+  // (#5) next upcoming match + live countdown shown right on the pill
+  const upcoming = list.filter(m => ['SCHEDULED', 'TIMED'].includes(m.status) && m.utc_date)
+    .sort((a, b) => new Date(a.utc_date) - new Date(b.utc_date));
+  dockNextMatch = upcoming[0] || null;
+  const nextEl = document.getElementById('usa-dock-next');
+  if (nextEl) nextEl.textContent = (!live && dockNextMatch)
+    ? '· ' + fmtCountdownShort(new Date(dockNextMatch.utc_date) - Date.now()) : '';
+
+  // (#4) keep the shop CTA labelled for the selected team
+  const shop = document.getElementById('usa-dock-shop');
+  if (shop) shop.textContent = '🛒 Shop ' + display + ' gear';
+}
+
+function renderUsaFixtures() {
+  const el = document.getElementById('usa-fixtures');
+  if (!el) { updateDockButton(); return; }
+  const all = dockTeamMatches();
+  if (all.length === 0) {
+    el.innerHTML = `<p class="text-center py-6" style="color:rgba(255,255,255,.65);font-size:.82rem;">${MATCH_DATA.matches.length ? 'No matches for this team yet.' : 'Fixtures load once the season feed is connected.'}</p>`;
+    updateDockButton();
+    return;
+  }
+  const isLive = m => ['IN_PLAY', 'PAUSED'].includes(m.status);
+  const liveNow = all.filter(isLive);
+  const upcoming = all.filter(m => ['SCHEDULED', 'TIMED'].includes(m.status)).sort((a, b) => new Date(a.utc_date) - new Date(b.utc_date));
+  const results = all.filter(m => m.status === 'FINISHED').reverse();
+  const ordered = [...liveNow, ...upcoming.slice(0, 5), ...results.slice(0, 5)];
+  const sc = v => (v == null ? '' : v);
+  el.innerHTML = ordered.map((m, idx) => {
+    const live = isLive(m), done = m.status === 'FINISHED';
+    const isNext = !live && !done && idx === liveNow.length;   // first upcoming fixture
+    const opp = m.home_code === dockTeam ? { name: m.away, flag: m.away_flag } : { name: m.home, flag: m.home_flag };
+    const homeAway = m.home_code === dockTeam ? 'vs' : '@';
+    const oppFlag = opp.flag ? `<img src="${escapeHtml(opp.flag)}" class="inline-block w-5 h-4 object-cover rounded-sm align-middle" alt="" loading="lazy"/>` : '';
+    const right = live ? `<span style="color:#fca5a5;font-weight:800;">${sc(m.home_score)}–${sc(m.away_score)} 🔴</span>`
+      : done ? `<span style="font-weight:800;">${sc(m.home_score)}–${sc(m.away_score)}</span>`
+      : `<span style="opacity:.8;">${fmtKickoff(m.utc_date)}</span>`;
+    const rightCol = isNext
+      ? `<span class="flex-shrink-0 text-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">${right}<button class="usa-fx-cal" onclick="addNextMatchToCalendar(event)">＋ Calendar</button></span>`
+      : `<span class="flex-shrink-0">${right}</span>`;
+    return `<div class="usa-fx${isNext ? ' next' : ''}">
+      <span class="min-w-0 truncate">${isNext ? '<span style="font-size:.62rem;font-weight:800;letter-spacing:.06em;color:var(--gold);display:block;">NEXT MATCH</span>' : ''}${homeAway} ${oppFlag} ${escapeHtml(opp.name || 'TBD')}</span>
+      ${rightCol}
+    </div>`;
+  }).join('');
+  updateDockButton();
+}
+
+// Close the dropdown on outside-click / Escape
+function initUsaDock() {
+  document.addEventListener('click', (e) => {
+    const d = document.getElementById('usa-dock');
+    if (d && d.classList.contains('open') && !d.contains(e.target)) closeUsaDock();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeUsaDock(); });
 }
 
 function fmtKickoff(utc) {
@@ -2670,7 +2970,9 @@ document.addEventListener('DOMContentLoaded', function() {
   renderProducts();           // paint the loading state (no hardcoded catalog)
   loadProductsFromDB();        // then load the live Supabase catalog and re-render
   renderStadiums();            // static host-venue guide
-  loadMatchCenter();           // schedule / scores / standings + game-day banner + pick'em
+  loadMatchCenter();           // schedule / scores / standings + game-day banner + pick'em + USA dock
+  initUsaDock();               // Team USA quick-look dropdown (click-outside / Escape to close)
+  setInterval(updateDockButton, 1000); // tick the pill countdown to the next match (#5)
   loadLeaderboard();           // pick'em leaderboard
   updateCartUI();
   updateCountdown();
