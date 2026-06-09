@@ -597,10 +597,6 @@
           <input id="pick-email" type="email" class="form-input text-sm" placeholder="Email" />
         </div>
         <div id="pickem-matches" class="space-y-2 max-h-80 overflow-y-auto pr-1 mb-4"></div>
-        <label class="flex items-start gap-2 text-xs text-gray-500 mb-3">
-          <input type="checkbox" id="pick-optin" class="mt-0.5" />
-          <span>Email me my discount code, match reminders &amp; drops. (You can unsubscribe anytime.)</span>
-        </label>
         <button onclick="submitPicks()" id="pick-submit" class="btn-primary w-full font-black">Lock in my picks</button>
         <p id="pick-status" class="text-sm text-center mt-3" style="display:none;"></p>
       </div>
@@ -3037,7 +3033,7 @@ async function submitPicks() {
   try {
     const res = await fetch(STORE_CONFIG.backendUrl + '/api/predictions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, name, picks: pickemSelections, marketingOptIn: document.getElementById('pick-optin').checked })
+      body: JSON.stringify({ email, name, picks: pickemSelections })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Could not save picks');
