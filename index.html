@@ -422,6 +422,7 @@
       <a href="#matches" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Scores</a>
       <a href="#pickem" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Pick'em</a>
       <a href="#stadiums" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Stadiums</a>
+      <a href="#guides" class="hidden md:block text-white text-sm font-semibold hover:text-gray-300 transition-colors">Guides</a>
       <button onclick="openCart()" class="relative text-white p-2 hover:bg-white hover:bg-opacity-10 rounded-lg transition-colors" aria-label="Open cart">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center" style="background:var(--red); display:none;">0</span>
@@ -627,6 +628,47 @@
       <p class="text-gray-500 text-base">16 venues across the USA, Canada &amp; Mexico for World Cup 2026.</p>
     </div>
     <div id="stadium-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+  </div>
+</section>
+
+<!-- ====================================================
+     SECTION: FREE FAN GUIDES — downloadable PDF resources
+     ==================================================== -->
+<section id="guides" class="py-16 px-4" style="background:#fff; scroll-margin-top:64px;">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-8">
+      <span class="text-xs font-bold uppercase tracking-widest text-red-600 mb-1 block">Free download</span>
+      <h2 class="font-display font-black text-navy uppercase text-5xl mb-2">Free Fan Guides</h2>
+      <p class="text-gray-500 text-base">Print 'em, share 'em, bring 'em to the watch party — your companion to the home-soil tournament.</p>
+    </div>
+    <div class="grid sm:grid-cols-3 gap-5">
+
+      <a href="/downloads/HomeSoil2026-Fan-Schedule-Guide.pdf" download onclick="trackEvent('FanGuideDownload',{content_name:'schedule_guide'})"
+         class="block bg-cream rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-shadow text-center">
+        <div class="text-4xl mb-3">📅</div>
+        <h3 class="font-bold text-navy text-lg mb-1">Fan Schedule Guide</h3>
+        <p class="text-gray-500 text-sm mb-4">The full 2026 schedule, 16 host cities, key dates &amp; the USMNT path.</p>
+        <span class="inline-flex items-center gap-2 font-bold text-sm text-white px-4 py-2 rounded-lg" style="background:var(--navy);">⬇ Download PDF</span>
+      </a>
+
+      <a href="/downloads/HomeSoil2026-World-Cup-Fan-Facts.pdf" download onclick="trackEvent('FanGuideDownload',{content_name:'fan_facts'})"
+         class="block bg-cream rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-shadow text-center">
+        <div class="text-4xl mb-3">⚽</div>
+        <h3 class="font-bold text-navy text-lg mb-1">World Cup Fan Facts</h3>
+        <p class="text-gray-500 text-sm mb-4">Stats, records &amp; historical firsts — sound like an expert at the bar.</p>
+        <span class="inline-flex items-center gap-2 font-bold text-sm text-white px-4 py-2 rounded-lg" style="background:var(--navy);">⬇ Download PDF</span>
+      </a>
+
+      <a href="/downloads/HomeSoil2026-Stadium-Fan-Facts.pdf" download onclick="trackEvent('FanGuideDownload',{content_name:'stadium_facts'})"
+         class="block bg-cream rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-shadow text-center">
+        <div class="text-4xl mb-3">🏟️</div>
+        <h3 class="font-bold text-navy text-lg mb-1">Stadium Fan Facts</h3>
+        <p class="text-gray-500 text-sm mb-4">Fun facts &amp; highlights for all 16 host venues across North America.</p>
+        <span class="inline-flex items-center gap-2 font-bold text-sm text-white px-4 py-2 rounded-lg" style="background:var(--navy);">⬇ Download PDF</span>
+      </a>
+
+    </div>
+    <p class="text-center text-gray-400 text-xs mt-6">Free fan reference guides inspired by publicly available information. Not affiliated with FIFA or U.S. Soccer.</p>
   </div>
 </section>
 
