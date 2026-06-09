@@ -170,6 +170,16 @@
     .pick-btn:hover { border-color:var(--navy); }
     .pick-btn.active { background:var(--navy); border-color:var(--navy); color:#fff; }
 
+    /* Fan Pulse — crowd consensus (betting-style) bars */
+    .consensus-row { padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.08); }
+    .consensus-row:last-child { border-bottom:none; }
+    .consensus-bar { display:flex; height:8px; border-radius:999px; overflow:hidden; background:rgba(255,255,255,0.1); }
+    .consensus-bar .seg { height:100%; transition:width 400ms ease; }
+    .seg-home { background:#5b9bff; }
+    .seg-draw { background:rgba(255,255,255,0.4); }
+    .seg-away { background:var(--red); }
+    .consensus-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+
     .btn-quick-add {
       background:var(--navy); color:#fff; border:none; border-radius:8px;
       padding:10px 16px; font-size:.85rem; font-weight:700; cursor:pointer;
@@ -594,10 +604,17 @@
         <button onclick="submitPicks()" id="pick-submit" class="btn-primary w-full font-black">Lock in my picks</button>
         <p id="pick-status" class="text-sm text-center mt-3" style="display:none;"></p>
       </div>
-      <!-- Leaderboard -->
-      <div class="bg-white bg-opacity-10 rounded-2xl p-6" style="background:rgba(255,255,255,0.08);">
-        <h3 class="font-bold text-white text-lg mb-4">🏆 Leaderboard</h3>
-        <div id="leaderboard" class="space-y-1"></div>
+      <!-- Leaderboard + Fan Pulse (crowd odds) -->
+      <div class="space-y-6">
+        <div class="bg-white bg-opacity-10 rounded-2xl p-6" style="background:rgba(255,255,255,0.08);">
+          <h3 class="font-bold text-white text-lg mb-4">🏆 Leaderboard</h3>
+          <div id="leaderboard" class="space-y-1"></div>
+        </div>
+        <div class="bg-white bg-opacity-10 rounded-2xl p-6" style="background:rgba(255,255,255,0.08);">
+          <h3 class="font-bold text-white text-lg mb-1">📊 Fan Pulse</h3>
+          <p class="text-white text-opacity-60 text-xs mb-4" style="color:rgba(255,255,255,0.6);">How fans are calling the upcoming matches — live crowd odds.</p>
+          <div id="fan-consensus" class="space-y-1"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -2636,6 +2653,7 @@ async function loadMatchCenter() {
   renderMatches();
   renderStandings();
   renderPickemMatches();
+  loadConsensus();
   renderGamedayBanner();
   populateDockTeams();
   renderUsaFixtures();
@@ -3027,6 +3045,7 @@ async function submitPicks() {
     show(`✅ Locked in ${data.picks} pick(s)!${codeMsg}`, true);
     trackEvent('Lead', { content_name: 'pickem_entry' });
     loadLeaderboard();
+    loadConsensus();
   } catch (e) {
     show(e.message, false);
   } finally {
@@ -3047,6 +3066,54 @@ async function loadLeaderboard() {
         <span class="font-black text-yellow-400">${r.points} pts</span>
       </div>`).join('');
   } catch (e) { /* leave empty */ }
+}
+
+// Fan Pulse — aggregate crowd odds per upcoming match (betting-style split).
+async function loadConsensus() {
+  const el = document.getElementById('fan-consensus');
+  if (!el) return;
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/predictions?consensus=1');
+    const data = await res.json().catch(() => ({}));
+    const tally = data.consensus || {};
+    const byId = {};
+    MATCH_DATA.matches.forEach(m => { byId[m.id] = m; });
+    // Only show matches we have team names for and at least one pick on;
+    // most-picked first so the liveliest contests lead.
+    const rows = Object.entries(tally)
+      .filter(([mid, t]) => byId[mid] && t.total > 0 && byId[mid].home !== 'TBD')
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 8);
+    if (rows.length === 0) {
+      el.innerHTML = `<p class="text-white text-opacity-60 text-sm" style="color:rgba(255,255,255,0.6);">Make your picks above — once fans weigh in, the crowd's odds appear here.</p>`;
+      return;
+    }
+    el.innerHTML = rows.map(([mid, t]) => {
+      const m = byId[mid];
+      const home = escapeHtml(m.home_code || m.home);
+      const away = escapeHtml(m.away_code || m.away);
+      const h = Math.round((t.HOME_TEAM / t.total) * 100);
+      const d = Math.round((t.DRAW / t.total) * 100);
+      const a = Math.max(0, 100 - h - d);   // force the bar to total 100%
+      return `
+        <div class="consensus-row">
+          <div class="flex items-center justify-between text-white text-xs font-semibold mb-1.5">
+            <span>${home} <span class="text-white text-opacity-40" style="color:rgba(255,255,255,0.4);">v</span> ${away}</span>
+            <span class="text-white text-opacity-50" style="color:rgba(255,255,255,0.5);">${t.total} pick${t.total === 1 ? '' : 's'}</span>
+          </div>
+          <div class="consensus-bar" role="img" aria-label="${home} ${h}%, Draw ${d}%, ${away} ${a}%">
+            <span class="seg seg-home" style="width:${h}%"></span>
+            <span class="seg seg-draw" style="width:${d}%"></span>
+            <span class="seg seg-away" style="width:${a}%"></span>
+          </div>
+          <div class="flex justify-between text-white text-opacity-70 mt-1.5" style="color:rgba(255,255,255,0.7);font-size:10px;">
+            <span><span class="consensus-dot seg-home"></span>${home} ${h}%</span>
+            <span><span class="consensus-dot seg-draw"></span>Draw ${d}%</span>
+            <span><span class="consensus-dot seg-away"></span>${away} ${a}%</span>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) { /* leave as-is */ }
 }
 
 // ===================================================

@@ -12,7 +12,6 @@
 // ============================================================
 import { createClient } from '@supabase/supabase-js';
 import { rateLimit, clientIp } from './_lib/ratelimit.js';
-import { sendEmail, pickemWelcomeHtml } from './_lib/email.js';
 import { scorePredictions } from './_lib/score.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -48,6 +47,22 @@ export default async function handler(req, res) {
         if (error) throw error;
         res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
         return res.status(200).json({ leaderboard: data || [] });
+      }
+      // Crowd consensus: aggregate every entry's picks into per-match
+      // HOME/DRAW/AWAY tallies (betting-style "what the fans think").
+      if (req.query?.consensus) {
+        const { data, error } = await supabase.from('predictions').select('picks');
+        if (error) throw error;
+        const tally = {};
+        for (const row of data || []) {
+          for (const [mid, pick] of Object.entries(row.picks || {})) {
+            if (!VALID_PICKS.has(pick)) continue;
+            const t = tally[mid] || (tally[mid] = { HOME_TEAM: 0, DRAW: 0, AWAY_TEAM: 0, total: 0 });
+            t[pick]++; t.total++;
+          }
+        }
+        res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+        return res.status(200).json({ consensus: tally });
       }
       const email = (req.query?.email || '').toLowerCase().trim();
       if (email) {
@@ -110,17 +125,10 @@ export default async function handler(req, res) {
     const { error } = await supabase.from('predictions').upsert(row, { onConflict: 'email' });
     if (error) throw error;
 
-    // Welcome + discount email (best-effort; no-ops if Resend unset). Only on the
-    // first entry to avoid emailing on every pick update.
+    // Discount code is returned in the response and shown on-screen right after
+    // the customer submits (no email — the popup is the delivery mechanism).
     const promoCode = process.env.PROMO_CODE || '';
     const promoPercent = process.env.PROMO_PERCENT || '10';
-    if (!existing) {
-      sendEmail({
-        to: cleanEmail,
-        subject: "You're in! Your World Cup 2026 Pick'em + a discount 🎁",
-        html: pickemWelcomeHtml(cleanName, promoCode, promoPercent)
-      }).catch(() => {});
-    }
 
     return res.status(200).json({ ok: true, picks: Object.keys(mergedPicks).length, promoCode: promoCode || null, promoPercent });
   } catch (err) {
