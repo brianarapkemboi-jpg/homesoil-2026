@@ -1,0 +1,9 @@
+# Treat PDFs (and common binary assets) as binary so Git never applies
+# line-ending (CRLF/LF) conversion, which would corrupt the files.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
