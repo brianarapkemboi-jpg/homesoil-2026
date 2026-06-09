@@ -592,10 +592,11 @@
       <!-- Entry form -->
       <div class="bg-white rounded-2xl p-6">
         <h3 class="font-bold text-navy text-lg mb-3">Make your picks</h3>
-        <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="grid grid-cols-2 gap-3 mb-2">
           <input id="pick-name" class="form-input text-sm" placeholder="Display name" maxlength="40" />
-          <input id="pick-email" type="email" class="form-input text-sm" placeholder="Email" />
+          <input id="pick-email" type="email" class="form-input text-sm" placeholder="Email" onblur="maybeLoadPicks()" onchange="maybeLoadPicks()" />
         </div>
+        <p class="text-xs text-gray-500 mb-4">Re-enter your email to edit your picks — or just choose your picks below.</p>
         <div id="pickem-matches" class="space-y-2 max-h-80 overflow-y-auto pr-1 mb-4"></div>
         <button onclick="submitPicks()" id="pick-submit" class="btn-primary w-full font-black">Lock in my picks</button>
         <p id="pick-status" class="text-sm text-center mt-3" style="display:none;"></p>
@@ -3013,12 +3014,49 @@ function renderPickemMatches() {
         <button class="pick-btn" data-m="${escapeHtml(m.id)}" data-v="AWAY_TEAM" onclick="selectPick('${escapeHtml(m.id)}','AWAY_TEAM',this)">${escapeHtml(m.away_code || m.away)}</button>
       </div>
     </div>`).join('');
+  // Re-highlight any picks already chosen so selections survive a live
+  // re-render (match polling) or a loaded "edit my picks" entry.
+  if (Object.keys(pickemSelections).length) applyLoadedPicks(pickemSelections);
 }
 function selectPick(matchId, val, btn) {
   pickemSelections[matchId] = val;
   const row = btn.parentElement;
   row.querySelectorAll('.pick-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+}
+
+// Highlight the pick buttons that match a set of saved/selected picks.
+function applyLoadedPicks(picks) {
+  const container = document.getElementById('pickem-matches');
+  if (!container) return;
+  container.querySelectorAll('.pick-btn').forEach(b => {
+    b.classList.toggle('active', picks[b.dataset.m] === b.dataset.v);
+  });
+}
+
+// When a returning player enters their email, pull their saved entry so they
+// can edit it: prefill their name, load + highlight their picks, and switch
+// the button to "Update my picks". No-ops for new players (no saved entry).
+let _loadedPicksEmail = '';
+async function maybeLoadPicks() {
+  const email = (document.getElementById('pick-email').value || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email === _loadedPicksEmail) return;
+  try {
+    const res = await fetch(STORE_CONFIG.backendUrl + '/api/predictions?email=' + encodeURIComponent(email));
+    const data = await res.json().catch(() => ({}));
+    const entry = data.entry;
+    if (!entry) return;                         // new player — nothing to load
+    _loadedPicksEmail = email;
+    if (entry.display_name) document.getElementById('pick-name').value = entry.display_name;
+    pickemSelections = { ...(entry.picks || {}) };
+    applyLoadedPicks(pickemSelections);
+    document.getElementById('pick-submit').textContent = 'Update my picks';
+    const status = document.getElementById('pick-status');
+    status.style.display = 'block';
+    status.style.color = '#16a34a';
+    const n = Object.keys(pickemSelections).length;
+    status.textContent = `Welcome back, ${entry.display_name}! Loaded ${n} pick${n === 1 ? '' : 's'} — change any and lock them in again.`;
+  } catch (e) { /* ignore — they can still pick fresh */ }
 }
 async function submitPicks() {
   const name = (document.getElementById('pick-name').value || '').trim();
