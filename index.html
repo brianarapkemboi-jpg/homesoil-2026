@@ -132,6 +132,11 @@
     .stock-badge.low { background:var(--red); color:#fff; }
     .stock-badge.new { background:var(--navy); color:#fff; }
 
+    /* Highlight a product when arrived at via an ad deep-link (/?product=ID) */
+    @keyframes cardPulse { 0%,100% { box-shadow:0 0 0 0 rgba(178,34,52,0); } 30% { box-shadow:0 0 0 4px rgba(178,34,52,.55); } }
+    .product-card.deeplink { animation:cardPulse 1.8s ease-out 2; }
+    @media (prefers-reduced-motion: reduce) { .product-card.deeplink { animation:none; outline:3px solid var(--red); } }
+
     .size-btn {
       border:1px solid #d1d5db; border-radius:4px; padding:3px 8px;
       font-size:.7rem; font-weight:600; cursor:pointer; background:#fff;
@@ -1270,7 +1275,9 @@ const STORE_CONFIG = {
   pixels: {
     metaPixelId: '4522318014761248', // Facebook/Instagram ads
     tiktokPixelId: '',            // TikTok ads
-    ga4Id: ''                     // Google Analytics 4 (e.g. 'G-XXXXXXX')
+    ga4Id: '',                    // Google Analytics 4 (e.g. 'G-XXXXXXX')
+    googleAdsId: '',              // Google Ads tag (e.g. 'AW-123456789')
+    googleAdsPurchaseLabel: ''    // Purchase conversion label (e.g. 'AbC-D_efG')
   }
 };
 // True only when a backend + Stripe key are configured.
@@ -1450,6 +1457,7 @@ async function loadProductsFromDB() {
     renderProducts();
     renderHeroShowcase();
     preloadProductImages();
+    focusDeepLinkedProduct();   // scroll to ?product=ID (ad/feed deep-links)
     if (document.getElementById('ad-product-select')) populateAdProductSelect();
   }
 }
@@ -1470,6 +1478,19 @@ function renderHeroShowcase() {
       <img src="${escapeHtml(src)}" alt="${escapeHtml(p.name)}" loading="lazy" class="w-full h-full object-cover" />
     </div>`).join('');
   el.style.display = 'grid';
+}
+
+// Ad/feed deep-link: if the URL has ?product=ID, scroll to that card and pulse
+// it so visitors arriving from a Google/Meta product ad land on the right item.
+function focusDeepLinkedProduct() {
+  const id = new URLSearchParams(window.location.search).get('product');
+  if (!id) return;
+  const card = document.querySelector(`.product-card[data-id="${(window.CSS && CSS.escape) ? CSS.escape(id) : id}"]`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.add('deeplink');
+  setTimeout(() => card.classList.remove('deeplink'), 4000);
+  trackEvent('ViewContent', { content_ids: [id], content_type: 'product' });
 }
 
 function renderProducts(filter = 'all', nameQuery = '') {
@@ -1967,8 +1988,20 @@ function buildOrderPayload(email, method) {
 
 function completeOrder(email, method, orderId) {
   const total = cartTotal();
+  const orderValue = +(total*1.08).toFixed(2);
   // Fire purchase conversion to ad pixels (so your ads can optimize)
-  trackEvent('Purchase', { value: +(total*1.08).toFixed(2), currency: 'USD', num_items: cartCount() });
+  trackEvent('Purchase', { value: orderValue, currency: 'USD', num_items: cartCount() });
+  // Google Ads conversion — distinct from the GA4 'Purchase' event above.
+  // Active only once pixels.googleAdsId + googleAdsPurchaseLabel are set.
+  const _px = STORE_CONFIG.pixels || {};
+  if (window.gtag && _px.googleAdsId && _px.googleAdsPurchaseLabel) {
+    gtag('event', 'conversion', {
+      send_to: _px.googleAdsId + '/' + _px.googleAdsPurchaseLabel,
+      value: orderValue,
+      currency: 'USD',
+      transaction_id: orderId || ''
+    });
+  }
 
   document.getElementById('checkout-flow').style.display = 'none';
   document.getElementById('checkout-confirmation').style.display = 'flex';
@@ -2495,14 +2528,18 @@ function initPixels() {
       ttq.load(px.tiktokPixelId);ttq.page();}(window,document,'ttq');
   }
 
-  // Google Analytics 4
-  if (px.ga4Id) {
+  // Google tag (gtag.js) — one loader powers GA4 and/or Google Ads.
+  // We register whichever IDs are set: GA4 for analytics, Ads for conversions.
+  if (px.ga4Id || px.googleAdsId) {
+    var gtagBoot = px.ga4Id || px.googleAdsId;
     var s=document.createElement('script');s.async=true;
-    s.src='https://www.googletagmanager.com/gtag/js?id='+px.ga4Id;
+    s.src='https://www.googletagmanager.com/gtag/js?id='+gtagBoot;
     document.head.appendChild(s);
     window.dataLayer=window.dataLayer||[];
     window.gtag=function(){dataLayer.push(arguments)};
-    gtag('js',new Date());gtag('config',px.ga4Id);
+    gtag('js',new Date());
+    if (px.ga4Id)       gtag('config', px.ga4Id);
+    if (px.googleAdsId) gtag('config', px.googleAdsId);
   }
 }
 

@@ -1,6 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/feed.xml", "destination": "/api/google-feed" }
+  ],
   "headers": [
     {
       "source": "/",
