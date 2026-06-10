@@ -1131,6 +1131,11 @@
           <div class="flex justify-between text-sm text-gray-600">
             <span>Subtotal</span><span id="checkout-sub">$0.00</span>
           </div>
+          <!-- Promo discount — shown only when a valid code is applied -->
+          <div id="checkout-discount-row" class="flex justify-between text-sm" style="display:none;">
+            <span class="text-green-600 font-semibold" id="checkout-discount-label">Promo discount</span>
+            <span class="text-green-600 font-semibold" id="checkout-discount">-$0.00</span>
+          </div>
           <div class="flex justify-between text-sm text-gray-600">
             <!-- Show shipping upfront — no surprise costs -->
             <span>Shipping</span>
@@ -1747,12 +1752,31 @@ function updateCheckoutSummary() {
     </div>
   `).join('');
 
+  // Mirror the server's pricing (create-payment-intent.js) so the displayed
+  // total always equals what's charged: free-ship uses the pre-discount
+  // subtotal; tax is charged on the discounted (net) subtotal.
   const sub = cartTotal();
+  const discount = Math.min(appliedDiscount || 0, sub);
+  const netSub = sub - discount;
   const ship = sub >= 75 ? 0 : 6.99;
-  const tax = sub * 0.08;
-  const total = sub + ship + tax;
+  const tax = netSub * 0.08;
+  const total = netSub + ship + tax;
 
   document.getElementById('checkout-sub').textContent = '$' + sub.toFixed(2);
+
+  // Promo discount line — visible only when a valid code knocked money off.
+  const discRow = document.getElementById('checkout-discount-row');
+  if (discRow) {
+    if (discount > 0) {
+      discRow.style.display = '';
+      document.getElementById('checkout-discount-label').textContent =
+        appliedDiscountPct ? `Promo discount (${appliedDiscountPct}% off)` : 'Promo discount';
+      document.getElementById('checkout-discount').textContent = '-$' + discount.toFixed(2);
+    } else {
+      discRow.style.display = 'none';
+    }
+  }
+
   document.getElementById('checkout-ship').textContent = ship === 0 ? 'FREE' : '$6.99';
   document.getElementById('checkout-ship').className = ship === 0 ? 'text-green-600 font-semibold' : 'text-gray-600';
   document.getElementById('checkout-tax').textContent = '$' + tax.toFixed(2);
@@ -1857,6 +1881,8 @@ async function initStripeCheckout() {
 // Apply a promo code: store it and rebuild the PaymentIntent so the server
 // re-prices with the discount (prices are always authoritative server-side).
 let appliedPromo = '';
+let appliedDiscount = 0;     // $ discount returned by the server (0 when none)
+let appliedDiscountPct = 0;  // % off, for the summary label
 function applyPromo() {
   appliedPromo = (document.getElementById('f-promo').value || '').trim();
   const msg = document.getElementById('promo-msg');
@@ -1864,6 +1890,12 @@ function applyPromo() {
   initStripeCheckout();
 }
 function showPromoResult(data) {
+  // Record the server-validated discount so the Order Summary can show it, then
+  // refresh the summary so the discount line + adjusted total are visible.
+  appliedDiscount = (data && data.promoApplied && data.discount) ? Number(data.discount) : 0;
+  appliedDiscountPct = (data && data.discountPct) ? data.discountPct : 0;
+  updateCheckoutSummary();
+
   const msg = document.getElementById('promo-msg');
   if (!msg) return;
   if (!appliedPromo) { msg.style.display = 'none'; return; }
