@@ -971,28 +971,22 @@
       <button onclick="closeCheckout()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500">✕</button>
     </div>
 
-    <!-- Confirmation state (hidden until payment simulated) -->
-    <div id="checkout-confirmation" style="display:none;" class="flex-1 flex flex-col items-center justify-center p-12 text-center">
-      <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl mb-6">✅</div>
-      <h2 class="font-display font-black text-navy text-4xl uppercase mb-2">Order Confirmed!</h2>
-      <p class="text-gray-600 mb-2">Thank you! Your fan gear is being printed.</p>
-      <p class="text-sm text-gray-400 mb-1">Paid with <span id="confirm-method" class="font-semibold text-navy"></span></p>
-      <p class="text-sm text-gray-400 mb-8">A confirmation email has been sent to <span id="confirm-email" class="font-semibold text-navy"></span></p>
-      <div class="bg-cream rounded-xl p-5 w-full max-w-sm mb-6">
-        <p class="text-sm font-bold text-navy mb-1">Estimated Delivery</p>
-        <p class="text-gray-600 text-sm">3–5 business days via USPS/UPS</p>
-        <p class="text-gray-400 text-xs mt-1">Tracking sent to your email</p>
+    <!-- Confirmation state (hidden until payment succeeds). Scrolls on short
+         screens; the auto-margin wrapper keeps it centred when it fits. -->
+    <div id="checkout-confirmation" style="display:none;" class="flex-1 flex flex-col overflow-y-auto p-6">
+      <div class="m-auto w-full max-w-sm flex flex-col items-center text-center">
+        <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl mb-6">✅</div>
+        <h2 class="font-display font-black text-navy text-4xl uppercase mb-2">Order Confirmed!</h2>
+        <p class="text-gray-600 mb-2">Thank you! Your fan gear is being printed.</p>
+        <p class="text-sm text-gray-400 mb-1">Paid with <span id="confirm-method" class="font-semibold text-navy"></span></p>
+        <p class="text-sm text-gray-400 mb-8">A confirmation email has been sent to <span id="confirm-email" class="font-semibold text-navy"></span></p>
+        <div class="bg-cream rounded-xl p-5 w-full mb-6">
+          <p class="text-sm font-bold text-navy mb-1">Estimated Delivery</p>
+          <p class="text-gray-600 text-sm">3–5 business days via USPS/UPS</p>
+          <p class="text-gray-400 text-xs mt-1">Tracking sent to your email</p>
+        </div>
+        <button onclick="closeCheckout()" class="btn-primary font-bold py-3 w-full">Continue Browsing</button>
       </div>
-      <div class="bg-navy rounded-xl p-5 w-full max-w-sm text-white mb-6">
-        <p class="text-sm font-bold mb-2">🎁 Create an account to:</p>
-        <ul class="text-sm text-white text-opacity-80 space-y-1 text-left mb-3" style="color:rgba(255,255,255,0.8);">
-          <li>• Track all your orders in one place</li>
-          <li>• Get early access to new drops</li>
-          <li>• Save your shipping details</li>
-        </ul>
-        <button class="w-full bg-white text-navy font-bold py-2 rounded-lg text-sm" onclick="closeCheckout()">Create Account (Optional)</button>
-      </div>
-      <button onclick="closeCheckout()" class="text-gray-400 text-sm hover:text-gray-600">No thanks, continue browsing</button>
     </div>
 
     <!-- Main checkout flow -->
