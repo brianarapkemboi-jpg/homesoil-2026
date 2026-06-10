@@ -80,6 +80,28 @@ export default async function handler(req, res) {
       if (claimed && claimed.length > 0) {
         const order = claimed[0];
 
+        // Backfill the shipping address from the PaymentIntent. The browser sends
+        // the address to Stripe only at confirm time (the Address Element attaches
+        // it as pi.shipping; wallets attach their own) — never to
+        // /create-payment-intent, so the order row's `customer` starts empty.
+        // Printify ships to `order.customer`, so persist the real address here
+        // BEFORE fulfillment, or every order would ship to a blank address.
+        const ship = pi.shipping;
+        if (ship && ship.address && ship.address.line1) {
+          const a = ship.address;
+          const line = a.line1 + (a.line2 ? ', ' + a.line2 : '');
+          // createPrintifyOrder() splits "City, ST" back into city + region.
+          const cityState = a.state ? `${a.city || ''}, ${a.state}` : (a.city || '');
+          const customer = {
+            name: ship.name || order.customer?.name || '',
+            address: line,
+            city: cityState,
+            zip: a.postal_code || ''
+          };
+          await supabase.from('orders').update({ customer }).eq('id', orderId);
+          order.customer = customer; // use the real address for Printify below
+        }
+
         // Guarantee a receipt. Cards already carry receipt_email; wallet
         // payments don't, so set it on the succeeded PaymentIntent — Stripe then
         // emails the receipt (requires "Successful payments" under Stripe →

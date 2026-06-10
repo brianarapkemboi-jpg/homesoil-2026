@@ -1028,26 +1028,39 @@
             <input type="email" id="f-email" class="form-input" placeholder="you@email.com" autocomplete="email" required inputmode="email" />
           </div>
 
-          <!-- Name -->
-          <div class="mb-4">
-            <label class="form-label">Full Name <span class="text-red-500">*</span></label>
-            <input type="text" id="f-name" class="form-input" placeholder="Jane Smith" autocomplete="name" required />
+          <!-- Shipping address — Stripe Address Element (LIVE mode): type-ahead
+               address autocomplete (free, Google-powered) + browser autofill.
+               Falls back to the manual fields below when Stripe isn't configured. -->
+          <div id="address-element-wrap" class="mb-4" style="display:none;">
+            <label class="form-label">Shipping Address <span class="text-red-500">*</span></label>
+            <div id="address-element"><!-- Stripe injects the address fields here --></div>
+            <div id="address-element-error" class="text-xs text-red-600 mt-2"></div>
           </div>
 
-          <!-- Address with simulated autocomplete -->
-          <div class="mb-4">
-            <label class="form-label">Street Address <span class="text-red-500">*</span></label>
-            <input type="text" id="f-address" class="form-input" placeholder="123 Main St" autocomplete="street-address" required />
-          </div>
-
-          <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="col-span-1">
-              <label class="form-label">ZIP <span class="text-red-500">*</span></label>
-              <input type="text" id="f-zip" class="form-input" placeholder="10001" autocomplete="postal-code" inputmode="numeric" maxlength="5" required />
+          <!-- Manual address fields — DEMO mode, or fallback if the Address
+               Element can't load. Hidden in LIVE mode (Address Element replaces it). -->
+          <div id="manual-address-fields">
+            <!-- Name -->
+            <div class="mb-4">
+              <label class="form-label">Full Name <span class="text-red-500">*</span></label>
+              <input type="text" id="f-name" class="form-input" placeholder="Jane Smith" autocomplete="name" required />
             </div>
-            <div class="col-span-2">
-              <label class="form-label">City, State <span class="text-red-500">*</span></label>
-              <input type="text" id="f-city" class="form-input" placeholder="New York, NY" autocomplete="address-level2" required />
+
+            <!-- Address -->
+            <div class="mb-4">
+              <label class="form-label">Street Address <span class="text-red-500">*</span></label>
+              <input type="text" id="f-address" class="form-input" placeholder="123 Main St" autocomplete="street-address" required />
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="col-span-1">
+                <label class="form-label">ZIP <span class="text-red-500">*</span></label>
+                <input type="text" id="f-zip" class="form-input" placeholder="10001" autocomplete="postal-code" inputmode="numeric" maxlength="5" required />
+              </div>
+              <div class="col-span-2">
+                <label class="form-label">City, State <span class="text-red-500">*</span></label>
+                <input type="text" id="f-city" class="form-input" placeholder="New York, NY" autocomplete="address-level2" required />
+              </div>
             </div>
           </div>
 
@@ -1753,6 +1766,7 @@ let orderProcessing = false;
 let stripeJs = null;            // Stripe(publishableKey) handle
 let stripeElements = null;      // elements group bound to a PaymentIntent clientSecret
 let stripePaymentEl = null;     // card Payment Element
+let stripeAddressEl = null;     // Address Element (shipping autocomplete + autofill)
 let stripeExpressEl = null;     // Express Checkout Element (Apple/Google Pay/Link)
 let currentOrderId = null;      // order row id from the backend
 let currentClientSecret = null; // active PaymentIntent client secret
@@ -1809,7 +1823,23 @@ async function initStripeCheckout() {
     stripeExpressEl.on('confirm', onExpressConfirm);
     stripeExpressEl.mount(expressMount);
 
-    // 4) Payment Element (cards + Cash App + others enabled in your Stripe dashboard).
+    // 4) Address Element — shipping autocomplete (type-ahead suggestions) +
+    //    browser autofill. The autocomplete is free while a Payment Element is in
+    //    the same group. Stripe attaches this as the PaymentIntent's shipping on
+    //    confirm, so the order ships to exactly what the customer picked here.
+    if (stripeAddressEl) { try { stripeAddressEl.unmount(); } catch(e){} }
+    stripeAddressEl = stripeElements.create('address', {
+      mode: 'shipping',
+      allowedCountries: ['US'],
+      fields: { phone: 'never' },
+      autocomplete: { mode: 'automatic' }
+    });
+    stripeAddressEl.mount('#address-element');
+    // LIVE mode: use the Address Element, hide the manual fallback fields.
+    const addrWrap = document.getElementById('address-element-wrap'); if (addrWrap) addrWrap.style.display = '';
+    const manualAddr = document.getElementById('manual-address-fields'); if (manualAddr) manualAddr.style.display = 'none';
+
+    // 5) Payment Element (cards + Cash App + others enabled in your Stripe dashboard).
     if (stripePaymentEl) { try { stripePaymentEl.unmount(); } catch(e){} }
     stripePaymentEl = stripeElements.create('payment', { layout: 'tabs' });
     stripePaymentEl.mount('#payment-element');
@@ -1891,31 +1921,32 @@ async function handleCheckoutSubmit(e) {
   if (cart.length === 0) { showToast('Your cart is empty'); return; }
 
   const email = document.getElementById('f-email').value.trim();
+
+  // Email is the one contact field we own in both modes (LIVE shipping/name come
+  // from Stripe's Address Element; card data lives in Stripe's iframe).
+  if (!markField('f-email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+    showToast('Please enter a valid email address'); return;
+  }
+
+  if (LIVE_MODE) return processPaymentLive(email);
+
+  // DEMO fallback: validate the manual shipping + simulated card fields.
   const name  = document.getElementById('f-name').value.trim();
   const addr  = document.getElementById('f-address').value.trim();
   const zip   = document.getElementById('f-zip').value.trim();
   const city  = document.getElementById('f-city').value.trim();
-
-  // Validate the shipping/contact fields we own (card data lives in Stripe's iframe).
+  const card   = (document.getElementById('f-card').value || '').replace(/\s/g,'');
+  const expiry = (document.getElementById('f-expiry').value || '').replace(/\D/g,'');
+  const cvv    = (document.getElementById('f-cvv').value || '').trim();
   let valid = true;
-  valid = markField('f-email',  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) && valid;
   valid = markField('f-name',   name.length >= 2) && valid;
   valid = markField('f-address',addr.length >= 4) && valid;
   valid = markField('f-zip',    /^\d{5}$/.test(zip)) && valid;
   valid = markField('f-city',   city.length >= 2) && valid;
+  valid = markField('f-card',   card.length >= 15) && valid;
+  valid = markField('f-expiry', expiry.length === 4) && valid;
+  valid = markField('f-cvv',    /^\d{3,4}$/.test(cvv)) && valid;
   if (!valid) { showToast('Please check the highlighted fields'); return; }
-
-  if (LIVE_MODE) return processPaymentLive(email, name, addr, city, zip);
-
-  // DEMO fallback: also validate the simulated card fields.
-  const card   = (document.getElementById('f-card').value || '').replace(/\s/g,'');
-  const expiry = (document.getElementById('f-expiry').value || '').replace(/\D/g,'');
-  const cvv    = (document.getElementById('f-cvv').value || '').trim();
-  let cardOk = true;
-  cardOk = markField('f-card',   card.length >= 15) && cardOk;
-  cardOk = markField('f-expiry', expiry.length === 4) && cardOk;
-  cardOk = markField('f-cvv',    /^\d{3,4}$/.test(cvv)) && cardOk;
-  if (!cardOk) { showToast('Please check the highlighted fields'); return; }
   processPaymentDemo(email, 'Card');
 }
 
@@ -1927,20 +1958,38 @@ function setPayBtn(text, disabled) {
 }
 
 // ---- LIVE: confirm the card payment via Stripe Payment Element ----
-async function processPaymentLive(email, name, addr, city, zip) {
+async function processPaymentLive(email) {
   if (!stripeElements || !currentClientSecret) { showToast('Checkout is still loading — one moment…'); return; }
   orderProcessing = true;
   const original = document.getElementById('pay-btn').innerHTML;
   setPayBtn('Processing payment…', true);
+  const addrErr = document.getElementById('address-element-error');
+  if (addrErr) addrErr.textContent = '';
   try {
-    const { error, paymentIntent } = await stripeJs.confirmPayment({
+    // Stripe REQUIRES elements.submit() before confirmPayment() whenever the
+    // Elements group includes an Express Checkout Element (it does). It must run
+    // first, before any other async work — otherwise Stripe rejects the confirm
+    // with "submit() must be called before stripe.confirmPayment()".
+    const { error: submitError } = await stripeElements.submit();
+    if (submitError) throw new Error(submitError.message);
+
+    // Make sure the shipping address is complete before we charge the card.
+    if (stripeAddressEl) {
+      const addr = await stripeAddressEl.getValue();
+      if (!addr.complete) {
+        if (addrErr) addrErr.textContent = 'Please complete your shipping address.';
+        throw new Error('Please complete your shipping address.');
+      }
+    }
+
+    // Stripe pulls the shipping address straight from the mounted Address Element
+    // and attaches it to the PaymentIntent — the webhook reads it for fulfillment.
+    const { error } = await stripeJs.confirmPayment({
       elements: stripeElements,
       clientSecret: currentClientSecret,
       confirmParams: {
         return_url: STORE_CONFIG.backendUrl + '/?paid=1',
-        payment_method_data: { billing_details: { name, email, address: { line1: addr, postal_code: zip } } },
-        receipt_email: email,
-        shipping: { name, address: { line1: addr, postal_code: zip } }
+        receipt_email: email
       },
       redirect: 'if_required'
     });
